@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Momo lens demo: a three minute calm-down session before a job interview." />
+    <meta name="mrbd-web-app-capable" content="yes" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/icon-96.png" />
+    <link rel="preload" href="/fonts/elms-sans-latin-v1.woff2" as="font" type="font/woff2" crossorigin />
+    <title>Momo</title>
+  </head>
+  <body>
+    <div id="root">
+      <canvas id="lens" class="lens" width="600" height="600" aria-hidden="true"></canvas>
+      <button id="hit" class="hit" type="button" aria-label="Start Momo session" autofocus></button>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
