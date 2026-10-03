@@ -5,7 +5,7 @@ import type {GlassCard, ObjectKind, Pose} from '../cards';
 import type {LensScene} from '../contracts';
 import {MAX_DT_MS, MotionTokens, Spring, springSpec, type SpringSpec} from '../motion';
 import {TOP_UP_FROM, drawBreathRing, stepBreath, warmBreath} from './breath';
-import {BEAD_STEP, drawBeads, prebakeBeads, warmBeads} from './beads';
+import {beadPos, drawBeads, prebakeBeads, warmBeads} from './beads';
 import {copyFor} from './copy';
 import {drawFind, warmFind} from './find';
 import {TRAIL_SAMPLE_MS, drawGaze, warmGaze} from './gaze';
@@ -50,7 +50,7 @@ class GlassScene implements LensScene {
     const s = this.s;
     switch (s.mode) {
       // No tap ripple on the Figma-exact screens (GS:298-305).
-      case 'BLANK': case 'OFF': case 'INTRO': case 'SUPPORT': case 'FIND': case 'SENSE': case 'BREATH':
+      case 'BLANK': case 'OFF': case 'INTRO': case 'SUPPORT': case 'FIND': case 'SENSE': case 'BREATH': case 'BEADS':
         return;
       case 'SWATCH':
         this.addRipple(300, 350, 0.5);
@@ -83,7 +83,7 @@ class GlassScene implements LensScene {
     }
     if (card.kind !== 'Sense') s.senseOp.to(0);
     // A pinch ripple started on the previous screen must not spill onto a Figma-exact one.
-    if (card.kind === 'Intro' || card.kind === 'Support' || card.kind === 'Find' || card.kind === 'Sense' || card.kind === 'Breath' || card.kind === 'BreathStep') s.ripples = [];
+    if (card.kind === 'Intro' || card.kind === 'Support' || card.kind === 'Find' || card.kind === 'Sense' || card.kind === 'Breath' || card.kind === 'BreathStep' || card.kind === 'Beads') s.ripples = [];
     if (card.kind !== 'Intro') s.introOp.to(0, springSpec(100, 1));
     if (card.kind !== 'BreathStep') s.breath = null;
     let icon: ObjectKind | null = null;
@@ -195,20 +195,28 @@ class GlassScene implements LensScene {
         s.mode = 'BEADS';
         this.hideObj();
         if (prev !== 'BEADS') {
-          s.beadAngle = 0;
-          s.beadRot.set(0);
+          s.beadFrom = 0;
+          s.beadTarget = 0;
           s.beadTurned = 0;
+          s.beadPulseAt = -1;
         }
-        const dir = card.dir ?? -1;
+        const dir = card.dir ?? 1;
         const guide = card.guide ?? false;
         const delta = card.turned - s.beadTurned;
-        if (guide || delta > 0) s.beadAngle += dir * BEAD_STEP * (guide ? 1 : delta);
+        if (guide || delta > 0) {
+          s.beadFrom = beadPos(s);
+          s.beadStart = s.now;
+          s.beadTarget += dir * (guide ? 1 : delta);
+          // Reduce motion: the beads jump (every spot looks the same after a turn), so the
+          // bracelet dims briefly instead to show that a bead was turned.
+          if (rm) {
+            s.beadFrom = s.beadTarget;
+            s.beadPulseAt = s.now;
+          }
+        }
         if (!guide) s.beadTurned = card.turned;
-        s.beadDir = dir;
-        s.beadGuide = guide;
-        s.beadRot.to(s.beadAngle);
         s.beadsOp.to(1);
-        s.texts.grid(copyFor(card));
+        s.texts.set([]); // Figma 4.0 has no words: the arrow shows the gesture, the voice explains it
         break;
       }
       case 'Intro': {

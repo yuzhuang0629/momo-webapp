@@ -124,13 +124,14 @@ export class State {
   senseKind: SenseKind = 'TEMPERATURE';
   senseT0 = 0;
 
-  // Beads (GS:103-108)
+  // Beads, Figma 4.0: how many spots the beads have moved down (a fraction while turning), easing
+  // from beadFrom at beadStart to beadTarget. beadPulseAt: Reduce motion's per-turn cue.
   readonly beadsOp = this.sp(0);
-  readonly beadRot = this.sp(0, springSpec(14, 1));
-  beadAngle = 0;
+  beadFrom = 0;
+  beadTarget = 0;
+  beadStart = 0;
   beadTurned = 0;
-  beadDir = -1;
-  beadGuide = false;
+  beadPulseAt = -1;
 
   // Gaze (GS:111-114)
   readonly gazeOp = this.sp(0);
@@ -176,6 +177,7 @@ export class State {
   /** Reduce motion: jump every animation to its end state (snapAll, GS:600-606). */
   snapAll(): void {
     for (const s of this.springs) s.snap();
+    this.beadFrom = this.beadTarget;
     this.texts.snapAll();
     this.icons = this.icons.filter((i) => i.outAt < 0);
     for (const i of this.icons) {

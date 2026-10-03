@@ -47,12 +47,9 @@ export function copyFor(card: GlassCard): Copy | null {
           return copy('Breathe Out', null, null, false, 'Out');
       }
       break;
+    // Figma 4.0 (113-1157) has no words: the bracelet and its dashed arrow; the voice explains.
     case 'Beads':
-      return copy(
-        'Turn the beads',
-        card.guide || card.turned === 0 ? 'Swipe your thumb up or down' : `${card.turned} of ${card.total}`,
-        card.meta ?? null,
-      );
+      return copy(null, null, null, false);
     case 'Gaze':
       return copy(card.instruction, null, card.meta ?? null, card.target !== 'GONE');
     case 'Intro':

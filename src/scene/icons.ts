@@ -1,10 +1,18 @@
 // Icons used by the v2.1 flow: Fingers (rub your fingers, GS:1420-1436) and Stem (get
 // comfortable, GS:1237-1247 with flower GS:1118-1146 and leaf GS:1505-1512).
 import {clamp01} from '../motion';
-import {softFill} from './beads';
 import {ACCENT, CREAM, WARM, WHITE, mix, rgba, type Rgb} from './palette';
 import {clearShadow, glowPad, makeSprite, setShadow, type Sprite} from './sprites';
 import type {Icon, State} from './state';
+
+/** softFill (GS:1536-1540): radial gradient offset up-left, stops 0 / .7 / 1. */
+function softFill(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, rgb: Rgb, a: number): CanvasGradient {
+  const g = ctx.createRadialGradient(cx - r * 0.15, cy - r * 0.2, 0, cx - r * 0.15, cy - r * 0.2, Math.max(1, r));
+  g.addColorStop(0, rgba(mix(rgb, WHITE, 0.35), a));
+  g.addColorStop(0.7, rgba(rgb, a * 0.9));
+  g.addColorStop(1, rgba(rgb, a * 0.6));
+  return g;
+}
 
 const DEG = Math.PI / 180;
 /** Fingers drawing scale (drawFingers(…, s·1.4), GS:1104); the icon spring s is applied live. */

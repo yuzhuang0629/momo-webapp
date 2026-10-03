@@ -52,6 +52,8 @@ export interface Timings {
   readonly countHold: number;
   readonly countOut: number;
   readonly beads: number;
+  /** #5: the bracelet fades in and rests before the two guide turns. */
+  readonly beadSettle: number;
   readonly beadIdleBeforeAuto: number;
   readonly beadAutoEvery: number;
   readonly beadGuideTurn: number;
@@ -95,6 +97,7 @@ export const DEFAULT_TIMINGS: Timings = {
   countHold: 3_000,
   countOut: 4_000,
   beads: 20_000,
+  beadSettle: 700,
   beadIdleBeforeAuto: 6_000,
   beadAutoEvery: 2_500,
   beadGuideTurn: 1_400,

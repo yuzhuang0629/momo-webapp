@@ -286,19 +286,24 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
     }
   }
 
-  /** #5 Virtual bracelet: two guide turns, then swipes turn beads; auto-turns when idle (SE:248-278). */
+  /**
+   * #5 Virtual bracelet (Figma 4.0): fades in at rest, two guide turns downwards like the frame's
+   * arrow, then swipes turn beads; auto-turns when idle (SE:248-281, live source 18:50).
+   */
   function* beads(meta: string): Co {
     setStep(5, 'beads');
     const goal = config.beadsToTurn;
     const card = (turned: number, dir: number, guide = false): GlassCard =>
       ({kind: 'Beads', turned, total: goal, dir, guide, meta});
     say(SCRIPT.BEADS);
+    show(card(0, 1));
+    if (yield* pinch(t.beadSettle)) return;
     for (let g = 1; g <= 2; g++) {
-      show(card(g, -1, true));
+      show(card(g, 1, true));
       if (yield* pinch(t.beadGuideTurn)) return;
     }
     let turned = 0;
-    show(card(0, -1));
+    show(card(0, 1));
     const budget = s(t.beads);
     const startedAtMs = run.now;
     let sinceSwipe = 0;
@@ -321,7 +326,7 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
         sinceSwipe += t.beadAutoEvery;
         if (sinceSwipe >= t.beadIdleBeforeAuto) {
           turned++;
-          show(card(turned, -1));
+          show(card(turned, 1));
         }
       }
     }
