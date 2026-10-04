@@ -8,6 +8,17 @@
     <link rel="icon" type="image/png" sizes="96x96" href="/icon-96.png" />
     <link rel="preload" href="/fonts/elms-sans-latin-v1.woff2" as="font" type="font/woff2" crossorigin />
     <title>Momo</title>
+    <script>
+      // Phone-browser preview: fit the 600×600 lens to a smaller screen before first layout
+      // (main.ts keeps it updated on rotation). Glasses and desktop screens are ≥ 600: no change.
+      (() => {
+        const fit = Math.min(1, screen.width / 600, screen.height / 600);
+        if (fit < 1) {
+          document.documentElement.classList.add('phone');
+          document.documentElement.style.setProperty('--fit', fit.toFixed(4));
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root">

@@ -66,3 +66,16 @@ body {
   color: transparent;
   outline: none;
 }
+
+/* Phone browsers (screen smaller than the 600×600 lens): main.ts adds .phone and sets --fit, and the
+   lens is zoomed down so it fits the screen. zoom (not transform) shrinks the layout box too, so
+   the browser doesn't widen the page around a 600 px element. Glasses and desktop are untouched. */
+html.phone,
+html.phone body {
+  min-width: 0;
+  min-height: 0;
+}
+
+html.phone #root {
+  zoom: var(--fit, 1);
+}

@@ -13,6 +13,18 @@ const MAX_STEP_MS = 50; // matches the spring integrator's dt cap
 /** How long the lens background takes to fade between levels. */
 const BG_FADE_MS = 1500;
 
+// Phone-browser preview: on a screen smaller than the 600×600 lens, styles.css zooms #root by --fit so
+// the whole lens shows. Judged from the physical screen (the page width a phone reports can grow to
+// fit the 600 px lens); the glasses' 600×600 screen and desktops stay at 1.
+function fitToScreen(): void {
+  const fit = Math.min(1, screen.width / 600, screen.height / 600);
+  const root = document.documentElement;
+  root.classList.toggle('phone', fit < 1);
+  root.style.setProperty('--fit', fit.toFixed(4));
+}
+fitToScreen();
+window.addEventListener('resize', fitToScreen);
+
 const canvas = document.getElementById('lens') as HTMLCanvasElement;
 const hit = document.getElementById('hit') as HTMLButtonElement;
 const ctx = canvas.getContext('2d', {alpha: false});
