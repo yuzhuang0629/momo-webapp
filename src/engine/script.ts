@@ -15,11 +15,13 @@ export const SCRIPT = {
   BREATH_2: 'Again... breathe in... and slowly breathe out.',
   BEADS: 'Now, gently roll your fingers.',
   FINGERS: 'Feel your fingertips.',
-  LOOK_AROUND: 'Take a look around you.',
+  LOOK_AROUND: 'Take a look around.', // re-recorded 2026-10-04
   FIND_OBJECT: 'Find one object nearby.',
   NOTICE_OBJECT: 'Notice its color... its shape... and its texture.', // unused since 2026-10-04
-  /** #7 web (2026-10-04): the one object's second page. No recording yet: spoken by speechSynthesis. */
-  FIND_WHITE: 'Find the white item.',
+  /** #7 web (2026-10-04): the one object's second page (recording: "Notice the White Item Nearby."). */
+  FIND_WHITE: 'Notice the white item nearby.',
+  /** #8 temperature branch (recording 2026-10-04); the scent branch keeps TOUCH. */
+  TEMPERATURE: 'Feel its temperature.',
   TOUCH: "Notice what you're touching.",
   TAKE_YOUR_TIME: 'Take your time.',
   LISTEN: 'Now, notice one sound around you.',

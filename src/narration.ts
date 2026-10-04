@@ -16,6 +16,8 @@ export const NARRATION: Readonly<Partial<Record<ScriptLine, string>>> = {
   [SCRIPT.BEADS]: clip('roll_fingers'),
   [SCRIPT.FINGERS]: clip('fingertips'),
   [SCRIPT.LOOK_AROUND]: clip('look_around'),
+  [SCRIPT.FIND_WHITE]: clip('notice_white_item'),
+  [SCRIPT.TEMPERATURE]: clip('feel_temperature'),
   [SCRIPT.FIND_OBJECT]: clip('find_object'),
   [SCRIPT.NOTICE_OBJECT]: clip('notice_object'),
   [SCRIPT.TOUCH]: clip('touching'),
@@ -45,7 +47,7 @@ export const FLOW_ORDER: readonly ScriptLine[] = [
   SCRIPT.BEADS, // #5
   SCRIPT.FINGERS, // #6
   SCRIPT.LOOK_AROUND, SCRIPT.FIND_WHITE, // #7 (one object)
-  SCRIPT.TOUCH, SCRIPT.TAKE_YOUR_TIME, // #8
+  SCRIPT.TEMPERATURE, SCRIPT.TAKE_YOUR_TIME, SCRIPT.TOUCH, // #8 (temperature is the demo's branch)
   SCRIPT.LISTEN, SCRIPT.JUST_NOTICE, // #9
   SCRIPT.GAZE, // #10
   // (#11 "get comfortable" was dropped 2026-10-04; its two recordings stay mapped above, unused.)
@@ -61,7 +63,7 @@ const STEP_FIRST_LINE: Readonly<Record<number, ScriptLine>> = {
   5: SCRIPT.BEADS,
   6: SCRIPT.FINGERS,
   7: SCRIPT.LOOK_AROUND,
-  8: SCRIPT.TOUCH,
+  8: SCRIPT.TEMPERATURE,
   9: SCRIPT.LISTEN,
   10: SCRIPT.GAZE,
   11: SCRIPT.END, // #11 was dropped: a jump there lands on the ending

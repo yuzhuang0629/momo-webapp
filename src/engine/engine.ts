@@ -385,7 +385,7 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
   function* touch(): Co {
     setStep(8, `touch → ${sense === 'SCENT' ? 'smell' : 'temperature'}`);
     show({kind: 'Sense', sense});
-    say(SCRIPT.TOUCH);
+    say(sense === 'TEMPERATURE' ? SCRIPT.TEMPERATURE : SCRIPT.TOUCH); // temperature: the 2026-10-04 recording
     if (yield* pinch(t.senseSecondLine)) return;
     say(SCRIPT.TAKE_YOUR_TIME);
     yield* pinch(t.sense - t.senseSecondLine);
