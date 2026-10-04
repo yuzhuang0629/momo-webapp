@@ -61,6 +61,8 @@ export interface Timings {
   readonly findLook: number;
   /** … then one frame: 6.2 (coloured circle) for a colour, 6.3 (the dotted cup) for a shape / material. */
   readonly findNotice: number;
+  /** Web: the empty lens between two items. */
+  readonly findGap: number;
   /** #8 "Notice Its Scent." / "Feel Its Temperature." */
   readonly sense: number;
   /** #8: "Notice what you're touching." … then "Take your time." */
@@ -104,8 +106,9 @@ export const DEFAULT_TIMINGS: Timings = {
   beadAutoEvery: 2_500,
   /** #6: two rubs (4.8 s), the bracelet fades (2 s), the caption page fades in (1.6 s), then ~5.6 s to read it. */
   fingers: 14_000,
-  findLook: 2_500,
-  findNotice: 4_500,
+  findLook: 3_500, // web: "Take a look around you." (1.9 s) plus time to look
+  findNotice: 6_500, // web: "Notice its color... its shape... and its texture." (4.8 s) plus a breath
+  findGap: 1_500,
   sense: 10_000,
   senseSecondLine: 5_000,
   listen: 15_000,

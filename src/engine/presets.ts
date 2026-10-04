@@ -17,7 +17,14 @@ export interface FindSet {
   readonly labels: readonly [string, string, string];
   /** #RRGGBB tint of the 6.2 dotted circle. */
   readonly colors: readonly [string, string, string];
+  /**
+   * Which second page each item gets: 'circle' (Figma 6.2, tinted dotted circle) or 'cup' (6.3).
+   * Optional; without it a colour feature gets the circle and a shape / material one the cup.
+   */
+  readonly pages?: readonly [FindPage, FindPage, FindPage];
 }
+
+export type FindPage = 'circle' | 'cup';
 
 export type PresetId = '1' | '2' | '3' | '4' | 'a' | 'b' | 'c' | 'd';
 
@@ -66,6 +73,8 @@ const DESK: SetData = {
   features: ['Something round', 'Something blue', 'Something cylindrical'],
   touchTargetHasSmell: true,
   labels: ['Round Item', 'Blue Item', 'Cylindrical Item'],
+  // The first two match (circles: white, then blue); only the third, the real cup, shows the cup.
+  pages: ['circle', 'circle', 'cup'],
   colors: ['#FFFFFF', '#6FA8FF', '#FFFFFF'],
 };
 
@@ -135,4 +144,9 @@ export function colorAt(set: FindSet, i: number): string {
 export function isColorAt(set: FindSet, i: number): boolean {
   const words = `${labelAt(set, i)} ${set.features[i] ?? ''}`.toLowerCase().split(/[^a-z]+/);
   return COLOR_HEX.some(([k]) => words.includes(k));
+}
+
+/** The second page for item i: the set's own choice, else circle for a colour and cup for a shape / material. */
+export function pageAt(set: FindSet, i: number): FindPage {
+  return set.pages?.[i] ?? (isColorAt(set, i) ? 'circle' : 'cup');
 }

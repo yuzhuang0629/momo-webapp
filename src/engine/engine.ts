@@ -9,7 +9,7 @@
 import type {BreathPhase, GlassCard, SenseKind} from '../cards';
 import type {DirectorOptions, EngineHost, EngineInput, MusicLevel, SessionEngine} from '../contracts';
 import {DEFAULT_CONFIG, RECONNECT_STEP_NUMBER, RECONNECT_STEPS, scaled, type SessionConfig} from './config';
-import {colorAt, isColorAt, labelAt, presetById} from './presets';
+import {colorAt, labelAt, pageAt, presetById} from './presets';
 import {CAPTION_OFF, LENS, reconnectMeta, SCRIPT} from './script';
 
 /** Session states (SessionState.kt). */
@@ -359,14 +359,20 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
     // Two frames per item (Android 23:19): 6.1 "Take a Look Around." with "Take a look around you.", then
     // 6.2 (coloured circle) for a colour feature or 6.3 (the dotted cup) for a shape / material one,
     // with "Notice its color... its shape... and its texture.".
+    // Web pacing (2026-10-04): each page outlasts its recording, and the lens rests empty for a
+    // moment between items so one object doesn't run straight into the next.
     for (let i = 0; i < findSet.features.length; i++) {
       const label = labelAt(findSet, i);
       const colorHex = colorAt(findSet, i);
       const total = findSet.features.length;
+      if (i > 0) {
+        show({kind: 'Blank'});
+        yield* pause(t.findGap);
+      }
       show({kind: 'Find', stage: 'LOOK', label, colorHex, index: i, total});
       say(SCRIPT.LOOK_AROUND);
       yield* pinch(t.findLook, 'pinch → notice');
-      show({kind: 'Find', stage: isColorAt(findSet, i) ? 'NOTICE' : 'ITEM', label, colorHex, index: i, total});
+      show({kind: 'Find', stage: pageAt(findSet, i) === 'circle' ? 'NOTICE' : 'ITEM', label, colorHex, index: i, total});
       say(SCRIPT.NOTICE_OBJECT); // the lens names the feature ("Notice the White Item Nearby.")
       yield* pinch(t.findNotice, 'pinch → next item');
     }
