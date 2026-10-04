@@ -2,6 +2,7 @@ import './styles.css';
 import type {EngineInput} from './contracts';
 import {readDirectorOptions} from './engine/director';
 import {createEngine} from './engine/engine';
+import {SCRIPT} from './engine/script';
 import {createScene} from './scene/index';
 import {createVoice} from './voice';
 
@@ -49,6 +50,7 @@ function send(input: EngineInput): void {
   engine.input(input);
 }
 
+let firstPinch = true;
 hit.addEventListener('click', () => {
   voice.unlock(engine.step);
   void keepDisplayAwake();
@@ -56,7 +58,13 @@ hit.addEventListener('click', () => {
     engine.start();
     return;
   }
+  // "Take a moment." belongs to the start screen, but sound is only allowed from the wearer's
+  // first pinch, which is the pinch that leaves it. Say it then: the logo's exit and the black
+  // hold take 3 s before #3's first line, so it fits (speech if the clip isn't down in 1.2 s).
+  const onStartScreen = firstPinch && engine.step === 2;
+  firstPinch = false;
   send('Select');
+  if (onStartScreen) voice.sayWhenReady(SCRIPT.BEGIN, 1200);
 });
 
 hit.addEventListener('keydown', event => {

@@ -36,6 +36,12 @@ export interface Voice {
   unlock(step: number): void;
   /** Speak one line (interrupts the previous one). Empty string = stop speaking. */
   say(text: string): void;
+  /**
+   * Speak a line as soon as its clip has downloaded (it is fetched first), or with speech once
+   * waitMs has passed; dropped if another line starts meanwhile. For "Take a moment.", which can
+   * only start at the first pinch.
+   */
+  sayWhenReady(text: string, waitMs: number): void;
   stop(): void;
 }
 
@@ -189,6 +195,23 @@ export function createVoice(enabled: boolean): Voice {
       prefetchFrom(flowIndexOfStep(step));
       // Back (QuickExit) can come at any moment; its short clip follows the first few.
       want([clipFor(SCRIPT.QUICK)], true);
+    },
+    sayWhenReady(text, waitMs) {
+      if (!enabled || !unlocked) return;
+      const url = clipFor(text);
+      if (url === null || !clipsWork) {
+        this.say(text);
+        return;
+      }
+      want([url]);
+      const mine = token;
+      const deadline = performance.now() + waitMs;
+      const check = (): void => {
+        if (mine !== token) return; // another line has started since
+        if (ready.has(url) || failed.has(url) || !clipsWork || performance.now() >= deadline) this.say(text);
+        else window.setTimeout(check, 50);
+      };
+      check();
     },
     say(text) {
       if (!enabled || !unlocked) return;
