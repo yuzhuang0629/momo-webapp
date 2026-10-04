@@ -3,7 +3,7 @@
   "name": "Momo",
   "description": "A three minute calm-down session before a job interview.",
   "appearance": {
-    "theme_color": "#3A4A34",
+    "theme_color": "#3F4A14",
     "icon": {
       "src": "../icons/momo-monochrome.png",
       "type": "monochrome"
