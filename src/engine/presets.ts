@@ -59,12 +59,13 @@ const COFFEE: SetData = {
   colors: ['#FFFFFF', '#FFA552', '#FFFFFF'],
 };
 
-// Web demo default (2026-10-04): the team's table has a cup of coffee. Item 3 is that cup: 6.1, then
-// the cup page (its shape), then #8 "Notice Its Scent.".
+// Web demo default (2026-10-04): the team's table has a cup of coffee. Item 3 is that cup, named by its
+// shape only (no object names on the lens): 6.1, then
+// the cup page, then #8 "Notice Its Scent.".
 const DESK: SetData = {
-  features: ['Something round', 'Something blue', 'Your cup of coffee'],
+  features: ['Something round', 'Something blue', 'Something cylindrical'],
   touchTargetHasSmell: true,
-  labels: ['Round Item', 'Blue Item', 'Coffee Cup'],
+  labels: ['Round Item', 'Blue Item', 'Cylindrical Item'],
   colors: ['#FFFFFF', '#6FA8FF', '#FFFFFF'],
 };
 
@@ -76,7 +77,7 @@ export const FIND_SETS: Readonly<Record<PresetId, FindSet>> = {
   a: {id: 'a', name: 'classic (preset 0, temperature)', ...P0},
   b: {id: 'b', name: 'warm desk (preset 2, temperature)', ...P2},
   c: {id: 'c', name: 'coffee (scent)', ...COFFEE},
-  d: {id: 'd', name: 'demo desk: round / blue / the coffee (scent)', ...DESK},
+  d: {id: 'd', name: 'demo desk: round / blue / cylindrical = the coffee (scent)', ...DESK},
 };
 
 export function isPresetId(id: string): id is PresetId {
