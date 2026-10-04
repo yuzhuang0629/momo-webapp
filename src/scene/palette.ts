@@ -8,6 +8,8 @@ export const CREAM: Rgb = [244, 241, 230];
 export const MINT: Rgb = [205, 232, 226];
 export const WHITE: Rgb = [255, 255, 255];
 export const BLACK: Rgb = [0, 0, 0];
+/** Lens background behind every screen: Figma frame 17 (252-2194) fill, a solid deep olive. */
+export const LENS_BG = '#3F4A14';
 
 export function mix(p: Rgb, q: Rgb, t: number): Rgb {
   return [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, p[2] + (q[2] - p[2]) * t];

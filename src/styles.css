@@ -33,7 +33,8 @@ body {
   width: 600px;
   height: 600px;
   overflow: hidden;
-  background: #000;
+  /* The lens background (LENS_BG, Figma frame 17), so there is no black flash before the first frame. */
+  background: #3f4a14;
   font-family: 'Elms Sans', sans-serif;
   font-synthesis: none;
 }

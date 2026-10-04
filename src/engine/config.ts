@@ -88,7 +88,7 @@ export interface Timings {
 export const DEFAULT_TIMINGS: Timings = {
   introOpen: 4_800,
   introAutoStart: 10_000,
-  introBeginHold: 2_000,
+  introBeginHold: 1_800,
   introMerge: 1_400,
   introFade: 1_000,
   introGap: 600,

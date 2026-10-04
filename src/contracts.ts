@@ -28,7 +28,11 @@ export interface EngineHost {
   log(message: string): void;
   /** The bead "clack" when the bracelet moves one bead (#5; SessionOutput.beadClick). Optional. */
   click?(): void;
+  /** Background music level (USER_FLOW 2.5); every change fades. */
+  music?(level: MusicLevel): void;
 }
+
+export type MusicLevel = 'OFF' | 'LOW' | 'FULL';
 
 /** Wearer inputs, already mapped from keys: Enter = Select, ArrowLeft/Up = Previous,
  * ArrowRight/Down = Next, Back (popstate/Escape) = QuickExit. Stop = end at once (director). */
@@ -60,6 +64,8 @@ export interface DirectorOptions {
   preset: string;
   /** Sense branch after the third item. URL ?sense=scent|temperature */
   sense: 'SCENT' | 'TEMPERATURE' | null;
+  /** Background music on/off. URL ?music=0 */
+  music: boolean;
   /** Voice lines on/off. URL ?voice=0 */
   voice: boolean;
   /** Seed for the engine's PRNG (the gaze route), so every take of one URL is the same. URL ?seed=7 */

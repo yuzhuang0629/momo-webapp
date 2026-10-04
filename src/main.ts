@@ -4,6 +4,7 @@ import {readDirectorOptions} from './engine/director';
 import {createEngine} from './engine/engine';
 import {SCRIPT} from './engine/script';
 import {createScene} from './scene/index';
+import {createMusic} from './music';
 import {createSfx} from './sfx';
 import {createVoice} from './voice';
 
@@ -16,7 +17,8 @@ const ctx = canvas.getContext('2d', {alpha: false});
 if (!ctx) throw new Error('2D canvas unavailable');
 
 const director = readDirectorOptions(location.search);
-const voice = createVoice(director.voice);
+const music = createMusic(director.music, '/music/cosmic_heart.mp3');
+const voice = createVoice(director.voice, speaking => music.duck(speaking));
 // The bead click (#5) shares the voice switch, as on Android (AudioPlayer.beadClick).
 const sfx = createSfx(director.voice);
 // Text is drawn into the canvas: wait for Elms Sans before creating the scene, so its text
@@ -37,6 +39,7 @@ const engine = createEngine(
     // downloading if the preload hasn't, then fall back to speech (the start screen holds 2 s).
     say: text => (text === SCRIPT.BEGIN ? voice.sayWhenReady(text, 600) : voice.say(text)),
     click: () => sfx.click(),
+    music: level => music.level(level),
     ripple: () => scene.ripple(),
     log: message => console.info(`[momo] ${message}`),
   },
@@ -59,6 +62,7 @@ function send(input: EngineInput): void {
 hit.addEventListener('click', () => {
   voice.unlock(engine.step);
   sfx.unlock();
+  music.unlock();
   void keepDisplayAwake();
   if (engine.phase === 'SAFE_IDLE') {
     engine.start();
@@ -142,8 +146,10 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     stopLoop();
     voice.stop();
+    music.setHidden(true);
   } else {
     startLoop();
+    music.setHidden(false);
     if (sessionEntry) void keepDisplayAwake();
   }
 });

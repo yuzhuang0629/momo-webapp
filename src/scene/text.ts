@@ -217,10 +217,9 @@ export function bakeText(lines: readonly string[], r: Role, x: number, y: number
   });
 }
 
-// ---------------------------------------------------------------- start screen text, Figma 16 (240-2022)
+// ---------------------------------------------------------------- start screen text, Figma 17 (252-2194)
 // Text column at y 320: the title (48 px, line height 1.13), a 32 px gap, then the pill
-// (41.232 px tall). The frame's blurred photo + 30 % black is the world behind the lens, not
-// lens content, so it is not drawn.
+// (41.232 px tall). The frame's solid background is LENS_BG, painted behind every screen.
 
 const INTRO_TOP = 320;
 const INTRO_TITLE_PX = 48;

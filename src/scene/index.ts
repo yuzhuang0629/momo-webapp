@@ -15,7 +15,7 @@ import {drawIcons, warmIcons} from './icons';
 import {drawListen, drawRipples, prebakeListen, warmListen} from './listen';
 import {LOGO_DONE, drawIntro, introT, warmIntro} from './logo';
 import {drawMomo, warmMomo} from './momo';
-import {ACCENT, MINT, WHITE, hexRgb, type Rgb} from './palette';
+import {ACCENT, LENS_BG, MINT, WHITE, hexRgb, type Rgb} from './palette';
 import {drawSense, warmSense} from './sense';
 import {State, type Mode} from './state';
 import {T_RISE, drawSupport, prebakeSupport, warmSupport} from './support';
@@ -429,7 +429,7 @@ class GlassScene implements LensScene {
     ctx.save();
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = '#000';
+    ctx.fillStyle = LENS_BG;
     ctx.fillRect(0, 0, 600, 600);
     ctx.lineCap = 'round';
     ctx.setLineDash([]);

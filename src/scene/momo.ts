@@ -1,7 +1,7 @@
 // The Momo dot (drawObj, GS:792-822). Its glow (setShadowLayer 16 or 6) is pre-blurred for a few
 // sizes and scaled to the current size; the soft fill and the black "drained" interior are drawn live.
 import {clamp01} from '../motion';
-import {ACCENT, mix, rgba, WHITE, type Rgb} from './palette';
+import {ACCENT, LENS_BG, mix, rgba, WHITE, type Rgb} from './palette';
 import {ctx2d, glowPad, newCanvas, shadowOnly} from './sprites';
 import type {State} from './state';
 
@@ -109,13 +109,13 @@ export function drawMomo(ctx: CanvasRenderingContext2D, s: State): void {
   ctx.beginPath();
   ctx.roundRect(-w / 2, -h / 2, w, h, rad);
   ctx.fill();
-  // "Drain to ring": an opaque black inner shape regardless of op (GS:815-820).
+  // "Drain to ring": an opaque inner shape in the lens background, regardless of op (GS:815-820).
   const f = clamp01(o.fill.value);
   if (f < 0.995) {
     const iw = Math.max(0, (w - 4) * (1 - f));
     const ih = Math.max(0, (h - 4) * (1 - f));
     ctx.globalAlpha = 1;
-    ctx.fillStyle = '#000';
+    ctx.fillStyle = LENS_BG;
     ctx.beginPath();
     ctx.roundRect(-iw / 2, -ih / 2, iw, ih, (Math.min(iw, ih) / 2) * cr);
     ctx.fill();

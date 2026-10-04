@@ -47,7 +47,7 @@ export interface Voice {
   stop(): void;
 }
 
-export function createVoice(enabled: boolean): Voice {
+export function createVoice(enabled: boolean, onSpeaking: (speaking: boolean) => void = () => undefined): Voice {
   const synth = typeof speechSynthesis === 'undefined' ? null : speechSynthesis;
   let unlocked = false;
 
@@ -108,6 +108,7 @@ export function createVoice(enabled: boolean): Voice {
   let watchdog = 0;
 
   function stop(): void {
+    onSpeaking(false);
     token++;
     clearTimeout(watchdog);
     if (current) {
@@ -131,6 +132,9 @@ export function createVoice(enabled: boolean): Voice {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = RATE;
       utterance.lang = 'en-US';
+      utterance.onstart = () => onSpeaking(true);
+      utterance.onend = () => onSpeaking(false);
+      utterance.onerror = () => onSpeaking(false);
       synth.speak(utterance);
     } catch {
       // Ignore: e.g. audio-busy on the device is routine.
@@ -156,7 +160,9 @@ export function createVoice(enabled: boolean): Voice {
     };
     current = audio;
     audio.onerror = () => fail(audio.error ?? 'media error');
+    audio.onended = () => onSpeaking(false);
     audio.onplaying = () => {
+      onSpeaking(true);
       started = true;
     };
     try {

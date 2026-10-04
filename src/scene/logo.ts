@@ -5,13 +5,6 @@ import {LOGO_DOT_GLOW} from './palette';
 import {blit, drawGlowDot, type Sprite} from './sprites';
 import type {State} from './state';
 import {bakeIntroPinch, bakeIntroTitle, drawIntroPill, fontReady} from './text';
-// Figma frame 16 (240-2022) background: the blurred photo, pre-rendered by
-// tools/gen-intro-bg.mjs and inlined (4 KB) so it is there on the first frame with no request.
-// Note: on the additive lens this lights the whole view; it is here to judge the look.
-import introBgUrl from './intro-bg.jpg?inline';
-
-const introBg = new Image();
-introBg.src = introBgUrl;
 
 const LOGO_R = 61.75;
 const LOGO_STROKE = 2.094;
@@ -111,11 +104,6 @@ export function drawIntro(ctx: CanvasRenderingContext2D, s: State, op: number): 
   const fade = s.introFadeMs <= 0 ? 1 : 1 - INTRO_FADE_EASE.at(clamp01((s.now - s.introStart - s.introDur) / s.introFadeMs));
   const a = op * fade;
   if (a <= 0.003) return;
-  if (introBg.complete && introBg.naturalWidth > 0) {
-    ctx.globalAlpha = a > 1 ? 1 : a;
-    ctx.drawImage(introBg, 0, 0, 600, 600);
-    ctx.globalAlpha = 1;
-  }
   const arcsA = LOGO_SIDE_A * a * seg(t, 2280, 2400);
   const arcsP = seg(t, 2280, 3720, LOGO_EASE);
   const dotsA = LOGO_SIDE_A * a * seg(t, 3960, 4800, LOGO_EASE);

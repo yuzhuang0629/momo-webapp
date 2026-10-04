@@ -7,7 +7,7 @@
 // moves in tick(dtMs), and a seeded PRNG (?seed) in place of kotlin.random.Random so the gaze route
 // is the same on every take.
 import type {BreathPhase, GlassCard, SenseKind} from '../cards';
-import type {DirectorOptions, EngineHost, EngineInput, SessionEngine} from '../contracts';
+import type {DirectorOptions, EngineHost, EngineInput, MusicLevel, SessionEngine} from '../contracts';
 import {DEFAULT_CONFIG, RECONNECT_STEP_NUMBER, RECONNECT_STEPS, scaled, type SessionConfig} from './config';
 import {colorAt, labelAt, presetById} from './presets';
 import {CAPTION_OFF, LENS, reconnectMeta, SCRIPT} from './script';
@@ -157,6 +157,8 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
 
   const show = (card: GlassCard): void => host.show(card);
   const say = (line: string): void => host.say(line);
+  /** Background music (USER_FLOW 2.5, SE music()): every change fades. */
+  const music = (level: MusicLevel): void => host.music?.(level);
 
   /** Waits for one of `kinds` or the scaled timeout; null on timeout (SE:99-107). */
   function* waitFor(ms: number, ...kinds: EngineInput[]): Co<EngineInput | null> {
@@ -195,6 +197,7 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
 
   function* pauseStage(from: number, autostart: boolean): Co {
     setPhase('PAUSE');
+    music('FULL'); // fades in with the start screen (applied at the first pinch)
     if (from <= 2) yield* startScreen(autostart);
     if (from <= 3) {
       setStep(3, 'feel the support');
@@ -266,6 +269,7 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
 
   function* reconnectStage(from: number): Co {
     setPhase('RECONNECT');
+    music('LOW'); // quieter under the hands-on steps
     const order = RECONNECT_STEPS.filter(x => config.steps.has(x));
     for (let i = 0; i < order.length; i++) {
       const which = order[i];
@@ -288,6 +292,7 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
           break;
         case 'LISTEN':
           setStep(9, 'listen');
+          music('OFF'); // silence for the room's own sounds
           // A first line, then the second after listenSecondLine unless the wearer pinched (SE:240-245).
           show({kind: 'SoundRings', prompt: LENS.LISTEN_PROMPT, title: LENS.LISTEN_TITLE, meta});
           say(SCRIPT.LISTEN);
@@ -297,6 +302,7 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
           }
           break;
         case 'EXPAND_VIEW':
+          music('FULL');
           yield* expandView(meta);
           break;
       }
@@ -400,6 +406,7 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
 
   function* reenterStage(): Co {
     setPhase('REENTER');
+    music('OFF');
     setStep(11, 'get comfortable');
     show({kind: 'Text', title: LENS.COMFORTABLE_TITLE, subtitle: LENS.COMFORTABLE_SUB, pose: 'Orb', obj: 'Stem', over: LENS.REENTER_META});
     say(SCRIPT.COMFORTABLE);
@@ -442,6 +449,7 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
   /** Every ending lands here. Kotlin's releaseAll() also stops speech (SE:388-397). */
   function safeIdle(): void {
     say('');
+    music('OFF');
     setPhase('SAFE_IDLE');
     show({kind: 'Blank'});
     log(`released · caption "${CAPTION_OFF}"`);
