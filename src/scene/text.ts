@@ -23,6 +23,7 @@ export const CAPTION_462 = 484.6; // sense 7.1, listen 8.1
 export const CAPTION_467 = 489.6; // breathing 3.x, support (Component 8)
 export const CAPTION_469 = 491.6; // expand view 9.1
 export const CAPTION_471 = 493.6; // find 6.x
+export const CAPTION_509 = 531.65; // beads 4.0 "Swipe down to spin." (text box top y 509)
 export const FIND_WRAP = 406; // 6.2 / 6.3 text box width (two lines)
 /** Widest a Figma line may be before it is scaled down, GS:1876. */
 const FIGMA_LINE_MAX = 560;

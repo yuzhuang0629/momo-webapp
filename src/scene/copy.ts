@@ -54,9 +54,9 @@ export function copyFor(card: GlassCard): Copy | null {
           return copy('Breathe Out', null, null, false, 'Out');
       }
       break;
-    // Figma 4.0 (113-1157) has no words: the bracelet and its dashed arrow; the voice explains.
+    // Figma 4.0 (113-1157): one line under the bracelet and its dashed arrow.
     case 'Beads':
-      return copy(null, null, null, false);
+      return copy('Swipe down to spin.', null, null, false, 'Swipe down'); // underline as in the frame
     case 'Gaze':
       // Figma 9.1: one line for the whole route; the light shows the way, the voice names it.
       return copy('Slowly Look Around.', null, null, false, 'Look Around');

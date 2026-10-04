@@ -18,7 +18,7 @@ import {ACCENT, MINT, WHITE, hexRgb, type Rgb} from './palette';
 import {drawSense, warmSense} from './sense';
 import {State, type Mode} from './state';
 import {T_RISE, drawSupport, prebakeSupport, warmSupport} from './support';
-import {CAPTION_462, CAPTION_467, CAPTION_469, CAPTION_471, FIND_WRAP, Roles, prebakeCommon} from './text';
+import {CAPTION_462, CAPTION_467, CAPTION_469, CAPTION_471, CAPTION_509, FIND_WRAP, Roles, prebakeCommon} from './text';
 
 const RIPPLE_LIFE_MS = 1800;
 
@@ -225,7 +225,7 @@ class GlassScene implements LensScene {
         }
         if (!guide) s.beadTurned = card.turned;
         s.beadsOp.to(1);
-        s.texts.set([]); // Figma 4.0 has no words: the arrow shows the gesture, the voice explains it
+        s.texts.caption(copyFor(card), CAPTION_509); // Figma 4.0: "Swipe down to spin." under the bracelet
         break;
       }
       case 'Intro': {
