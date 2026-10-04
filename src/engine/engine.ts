@@ -1,15 +1,16 @@
 // The session director for USER_FLOW v2.1. Port of momo-android session/SessionEngine.kt
-// (snapshot 18:25). Every step is timed and also ends early on a pinch; nothing waits for
+// (snapshot 21:06). Every step is timed and also ends early on a pinch; nothing waits for
 // confirmation. QuickExit and Stop cancel the script and run their own short ending.
 //
 // Web differences: no camera/AI (the find-three result is the director's preset, available at
-// once), no balance check, haptics, heartbeat or music (phone-only), and one virtual clock that
-// only moves in tick(dtMs).
-import type {BreathPhase, GazeTarget, GlassCard, SenseKind} from '../cards';
+// once), no balance check, haptics, heartbeat or music (phone-only), one virtual clock that only
+// moves in tick(dtMs), and a seeded PRNG (?seed) in place of kotlin.random.Random so the gaze route
+// is the same on every take.
+import type {BreathPhase, GlassCard, SenseKind} from '../cards';
 import type {DirectorOptions, EngineHost, EngineInput, SessionEngine} from '../contracts';
 import {DEFAULT_CONFIG, RECONNECT_STEP_NUMBER, RECONNECT_STEPS, scaled, type SessionConfig} from './config';
 import {colorAt, labelAt, presetById} from './presets';
-import {CAPTION_OFF, featureLine, LENS, reconnectMeta, SCRIPT} from './script';
+import {CAPTION_OFF, LENS, reconnectMeta, SCRIPT} from './script';
 
 /** Session states (SessionState.kt). */
 export type Phase = 'IDLE' | 'PAUSE' | 'RECONNECT' | 'REENTER' | 'END' | 'QUICK' | 'SAFE_IDLE';
@@ -19,6 +20,18 @@ const isEnding = (p: Phase): boolean => p === 'END' || p === 'QUICK';
 
 const FIRST_STEP = 2;
 const LAST_STEP = 12;
+
+/** mulberry32: a tiny seeded PRNG; returns floats in [0, 1) like kotlin.random.Random.nextFloat(). */
+export function seededRandom(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 // ---------------------------------------------------------------- coroutine runner
 //
@@ -115,6 +128,8 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
   const findSet = presetById(opts.preset);
   const sense: SenseKind = opts.sense ?? (findSet.touchTargetHasSmell ? 'SCENT' : 'TEMPERATURE');
 
+  // Re-seeded at every launch, so a restart or a director jump replays the same direction.
+  let random = seededRandom(opts.seed);
   let phase: Phase = 'IDLE';
   let step = 0;
   let startedAt = 0;
@@ -213,10 +228,9 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
     yield* pinch(t.supportRings);
   }
 
-  /** #4 Intro, then n cycles; any pinch ends all of breathing (SE:197-215). */
+  /** #4 Intro (silent), then n cycles, one recorded line per cycle; any pinch ends all of breathing (SE:198-216). */
   function* breathe(n: number): Co {
     show({kind: 'Breath', breaths: n, durationMs: s(t.breathIntro)});
-    say(SCRIPT.BREATH_INTRO);
     if (yield* pinch(t.breathIntro, 'pinch → skip breathing')) return;
     const pattern = config.breathing;
     const seq: ReadonlyArray<readonly [BreathPhase, number]> =
@@ -225,12 +239,6 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
         : pattern === 'CYCLIC_SIGH'
           ? [['INHALE', t.sighIn], ['TOP_UP', t.sighTopUp], ['EXHALE', t.sighOut]]
           : [['INHALE', t.countIn], ['HOLD', t.countHold], ['EXHALE', t.countOut]];
-    const lines: Readonly<Record<BreathPhase, string>> = {
-      INHALE: SCRIPT.BREATHE_IN,
-      TOP_UP: SCRIPT.TOP_UP,
-      HOLD: SCRIPT.HOLD,
-      EXHALE: SCRIPT.BREATHE_OUT,
-    };
     for (let i = 0; i < n; i++) {
       for (const [p, ms] of seq) {
         show({
@@ -242,7 +250,8 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
           countHold: pattern === 'COUNT_HOLD',
           topUp: pattern === 'CYCLIC_SIGH',
         });
-        say(lines[p]);
+        // One recorded line per cycle ("…breathe in… and breathe out"), as the inhale starts.
+        if (p === 'INHALE') say(i === 0 ? SCRIPT.BREATH_1 : SCRIPT.BREATH_2);
         if (yield* pinch(ms)) return;
       }
     }
@@ -274,7 +283,13 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
           break;
         case 'LISTEN':
           setStep(9, 'listen');
-          yield* hold({kind: 'SoundRings', prompt: LENS.LISTEN_PROMPT, title: LENS.LISTEN_TITLE, meta}, SCRIPT.LISTEN, t.listen);
+          // A first line, then the second after listenSecondLine unless the wearer pinched (SE:240-245).
+          show({kind: 'SoundRings', prompt: LENS.LISTEN_PROMPT, title: LENS.LISTEN_TITLE, meta});
+          say(SCRIPT.LISTEN);
+          if (!(yield* pinch(t.listenSecondLine))) {
+            say(SCRIPT.JUST_NOTICE);
+            yield* pinch(t.listen - t.listenSecondLine);
+          }
           break;
         case 'EXPAND_VIEW':
           yield* expandView(meta);
@@ -284,8 +299,8 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
   }
 
   /**
-   * #5 Virtual bracelet (Figma 4.0): fades in at rest, two guide turns downwards like the frame's
-   * arrow, then swipes turn beads; auto-turns when idle (SE:248-281, live source 18:50).
+   * #5 Virtual bracelet (Figma 4.0): fades in and waits still; swipes turn beads (down = like the
+   * frame's arrow); auto-turns when idle (SessionEngine, Android 21:12).
    */
   function* beads(meta: string): Co {
     setStep(5, 'beads');
@@ -293,12 +308,8 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
     const card = (turned: number, dir: number, guide = false): GlassCard =>
       ({kind: 'Beads', turned, total: goal, dir, guide, meta});
     say(SCRIPT.BEADS);
-    show(card(0, 1));
-    if (yield* pinch(t.beadSettle)) return;
-    for (let g = 1; g <= 2; g++) {
-      show(card(g, 1, true));
-      if (yield* pinch(t.beadGuideTurn)) return;
-    }
+    // The bracelet fades in and waits still (Figma 4.0); a thumb swipe down turns one bead down,
+    // as the frame's arrow shows. No demo turns (Android 21:12).
     let turned = 0;
     show(card(0, 1));
     const budget = s(t.beads);
@@ -330,7 +341,7 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
     log(`beads turned: ${turned}`);
   }
 
-  /** #7 Three things by feature: LOOK → NOTICE (tinted circle) → ITEM (cup) per item (SE:302-317). */
+  /** #7 Three things by feature: LOOK → NOTICE (tinted circle) → ITEM (cup) per item (SE:306-322). */
   function* findThree(): Co {
     setStep(7, `find three (${findSet.name})`);
     say(SCRIPT.LOOK_AROUND);
@@ -339,42 +350,41 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
       const colorHex = colorAt(findSet, i);
       const total = findSet.features.length;
       show({kind: 'Find', stage: 'LOOK', label, colorHex, index: i, total});
+      if (i > 0) say(SCRIPT.FIND_OBJECT); // the first item follows "Take a look around you."
       yield* pinch(t.findLook, 'pinch → notice');
       show({kind: 'Find', stage: 'NOTICE', label, colorHex, index: i, total});
-      say(featureLine(findSet.features[i]));
+      say(SCRIPT.NOTICE_OBJECT); // the lens names the feature ("Notice the White Item Nearby.")
       if (yield* pinch(t.findNotice, 'pinch → next item')) continue;
       show({kind: 'Find', stage: 'ITEM', label, colorHex, index: i, total});
       yield* pinch(t.findItem, 'pinch → next item');
     }
   }
 
-  /** #8 Scent or temperature (SE:320-324). Kotlin passes #7's vision result; here it is the preset. */
+  /**
+   * #8 Scent or temperature (SE:329-337). Kotlin passes #7's vision result; here it is the preset.
+   * The recording is the same for both branches; the lens says which. A pinch skips the second line.
+   */
   function* touch(): Co {
     setStep(8, `touch → ${sense === 'SCENT' ? 'smell' : 'temperature'}`);
-    yield* hold({kind: 'Sense', sense}, sense === 'SCENT' ? SCRIPT.SMELL : SCRIPT.TEMPERATURE, t.sense);
+    show({kind: 'Sense', sense});
+    say(SCRIPT.TOUCH);
+    if (yield* pinch(t.senseSecondLine)) return;
+    say(SCRIPT.TAKE_YOUR_TIME);
+    yield* pinch(t.sense - t.senseSecondLine);
   }
 
-  /** #10 Guiding light: right, left, up, down at the hands, then it fades (SE:327-342). */
+  /**
+   * #10 Figma 9.1: the light leaves its home once, slowly, in a random direction (one slow head
+   * turn), rests there, then fades. A pinch only cuts the wait short (SE:340-351).
+   */
   function* expandView(meta: string): Co {
     setStep(10, 'expand view');
     say(SCRIPT.GAZE);
-    const route: ReadonlyArray<readonly [GazeTarget, string]> = [
-      ['RIGHT', LENS.GAZE_RIGHT],
-      ['LEFT', LENS.GAZE_LEFT],
-      ['UP', LENS.GAZE_UP],
-      ['DOWN', LENS.GAZE_DOWN],
-    ];
-    for (const [target, words] of route) {
-      if (target === 'DOWN') say(SCRIPT.GAZE_DOWN);
-      show({kind: 'Gaze', target, instruction: words, meta});
-      // A pinch on a target jumps to GONE; the returns to centre are plain pauses (SE:334-337).
-      if (yield* pinch(t.gazeMove + t.gazeHold, 'pinch → light fades')) break;
-      if (target !== 'DOWN') {
-        show({kind: 'Gaze', target: 'CENTER', instruction: words, meta});
-        yield* pause(t.gazeMove / 2);
-      }
-    }
-    show({kind: 'Gaze', target: 'GONE', instruction: LENS.GAZE_GONE, meta});
+    const angleDeg = random() * 360;
+    log(`light → ${angleDeg.toFixed(1)}°`);
+    show({kind: 'Gaze', target: 'AWAY', instruction: '', meta, angleDeg});
+    yield* pinch(t.gazeMove + t.gazeHold);
+    show({kind: 'Gaze', target: 'GONE', instruction: '', meta});
     yield* pause(t.fade);
   }
 
@@ -383,11 +393,11 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
   function* reenterStage(): Co {
     setPhase('REENTER');
     setStep(11, 'get comfortable');
-    yield* hold(
-      {kind: 'Text', title: LENS.COMFORTABLE_TITLE, subtitle: LENS.COMFORTABLE_SUB, pose: 'Orb', obj: 'Stem', over: LENS.REENTER_META},
-      SCRIPT.COMFORTABLE,
-      t.comfortable,
-    );
+    show({kind: 'Text', title: LENS.COMFORTABLE_TITLE, subtitle: LENS.COMFORTABLE_SUB, pose: 'Orb', obj: 'Stem', over: LENS.REENTER_META});
+    say(SCRIPT.COMFORTABLE);
+    if (yield* pinch(t.comfortableSecondLine)) return;
+    say(SCRIPT.CHECK_CAMERA);
+    yield* pinch(t.comfortable - t.comfortableSecondLine);
   }
 
   function* endCompanionship(): Co {
@@ -435,6 +445,7 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
     phase = 'IDLE';
     step = 0;
     startedAt = run.now;
+    random = seededRandom(opts.seed);
     run.launch(session(from, autostart));
   }
 
@@ -452,7 +463,7 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
     start(): void {
       if (isActive(phase)) return;
       const from = clampStep(opts.step ?? FIRST_STEP);
-      host.log(`start at #${from} · preset ${findSet.id} · sense ${sense}${opts.autostart ? ' · autostart' : ''}`);
+      host.log(`start at #${from} · preset ${findSet.id} · sense ${sense} · seed ${opts.seed}${opts.autostart ? ' · autostart' : ''}`);
       launchAt(from, opts.autostart);
     },
 

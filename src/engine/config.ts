@@ -1,4 +1,4 @@
-// Session timings and settings. Port of momo-android session/SessionConfig.kt (snapshot 18:25).
+// Session timings and settings. Port of momo-android session/SessionConfig.kt (snapshot 21:06).
 // All durations are design ms at 1×. The web app keeps timeScale = 1: the director's ?speed
 // multiplies dt in main.ts instead, so pictures and timers scale together.
 
@@ -52,11 +52,8 @@ export interface Timings {
   readonly countHold: number;
   readonly countOut: number;
   readonly beads: number;
-  /** #5: the bracelet fades in and rests before the two guide turns. */
-  readonly beadSettle: number;
   readonly beadIdleBeforeAuto: number;
   readonly beadAutoEvery: number;
-  readonly beadGuideTurn: number;
   readonly fingers: number;
   /** #7 per item: 6.1 "Take a Look Around." … */
   readonly findLook: number;
@@ -66,10 +63,18 @@ export interface Timings {
   readonly findItem: number;
   /** #8 "Notice Its Scent." / "Feel Its Temperature." */
   readonly sense: number;
+  /** #8: "Notice what you're touching." … then "Take your time." */
+  readonly senseSecondLine: number;
   readonly listen: number;
+  /** #9: "Now, notice one sound around you." … then "You don't need to react to it. Just notice it." */
+  readonly listenSecondLine: number;
+  /** #10: one slow move of the light in a random direction (the scene's spring takes ~5 s) … */
   readonly gazeMove: number;
+  /** … then it rests there before it fades. */
   readonly gazeHold: number;
   readonly comfortable: number;
+  /** #11: "Adjust your hair or clothing…" … then "When you're ready, check your camera and framing." */
+  readonly comfortableSecondLine: number;
   readonly end: number;
   readonly quick: number;
   readonly fade: number;
@@ -97,20 +102,21 @@ export const DEFAULT_TIMINGS: Timings = {
   countHold: 3_000,
   countOut: 4_000,
   beads: 20_000,
-  beadSettle: 700,
   beadIdleBeforeAuto: 6_000,
   beadAutoEvery: 2_500,
-  beadGuideTurn: 1_400,
   /** #6: two rubs (4.8 s), the bracelet fades (2 s), the caption page fades in (1.6 s), then ~5.6 s to read it. */
   fingers: 14_000,
   findLook: 2_500,
   findNotice: 3_500,
   findItem: 4_000,
   sense: 10_000,
+  senseSecondLine: 5_000,
   listen: 15_000,
-  gazeMove: 3_500,
-  gazeHold: 1_000,
+  listenSecondLine: 6_000,
+  gazeMove: 7_000,
+  gazeHold: 4_000,
   comfortable: 12_000,
+  comfortableSecondLine: 5_000,
   end: 6_000,
   quick: 4_800,
   fade: 1_800,

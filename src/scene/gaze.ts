@@ -1,7 +1,8 @@
 // Expand view, Figma 9.1 (drawGaze, GS:1685-1709; trail sampling GS:719-724): the light's home
 // (dotted circle r 63.75), the light (glowing dot r 14.77) and, while it moves, its tail — Figma's
 // 301.5 × 7.5 wedge, white at the light fading to nothing — pointing back the way it came (longer
-// the faster it goes).
+// the faster it goes). The route (SessionEngine.expandView, 21:06): the light goes out once along a
+// random angle on a slow spring (~5 s), rests, and fades; the scene follows the card's angle (GS:587-599).
 import {DOT_GLOW_17} from './palette';
 import {blit, drawGlowDot, makeSprite, newCanvas, ctx2d, type Sprite} from './sprites';
 import {Trail, type State} from './state';
@@ -13,10 +14,26 @@ export const GAZE_HOME_Y = 256.75;
 const RING_R = 63.75;
 const BIG_STROKE = 3.166;
 const DOT_R = 14.77;
+/** How far the light goes out before the frame's edges stop it (GAZE_REACH). */
+const REACH = 300;
+/** The frame the light stays inside: x 50…550, y 60…405 (above the caption, text box top 469). */
+const MIN_X = 50, MAX_X = 550, MIN_Y = 60, MAX_Y = 405;
 const TAIL_LEN = 301.5; // Rectangle 13
 const TAIL_W = 7.5;
 /** The tail points at where the light was this long ago. */
 const TAIL_LOOKBACK_MS = 400;
+
+/** Where an AWAY card sends the light: out from home along angleDeg (0 = right, 90 = down). */
+export function gazeAwayPoint(angleDeg: number): readonly [number, number] {
+  const r = (angleDeg * Math.PI) / 180;
+  const ux = Math.cos(r), uy = Math.sin(r);
+  let d = REACH;
+  if (ux > 1e-3) d = Math.min(d, (MAX_X - GAZE_HOME_X) / ux);
+  else if (ux < -1e-3) d = Math.min(d, (MIN_X - GAZE_HOME_X) / ux);
+  if (uy > 1e-3) d = Math.min(d, (MAX_Y - GAZE_HOME_Y) / uy);
+  else if (uy < -1e-3) d = Math.min(d, (MIN_Y - GAZE_HOME_Y) / uy);
+  return [GAZE_HOME_X + ux * d, GAZE_HOME_Y + uy * d];
+}
 
 let ring: Sprite | null = null;
 /**

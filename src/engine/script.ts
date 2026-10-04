@@ -1,35 +1,35 @@
-// Every word Momo says or shows. Voice lines port session/Script.kt; lens copy ports
-// glasses/LensContent.kt plus the strings SessionEngine.kt puts on cards (snapshot 18:25).
-// Voice keeps the gentle Figma copy; never "calm down", "relax", "don't worry", "how do you feel".
+// Every word Momo says or shows. Voice lines port session/Script.kt (snapshot 20:54); lens copy
+// ports glasses/LensContent.kt plus the strings SessionEngine.kt puts on cards.
+// Since 2026-10-03 every voice line is one of the team's recordings (public/voice/, mapped in
+// src/narration.ts); the text here is the recording's words, and the speechSynthesis fallback
+// says the same. Never "calm down", "relax", "don't worry", "how do you feel".
 import type {BreathPhase, GlassCard} from '../cards';
 
 /** Voice lines (Script.kt). */
 export const SCRIPT = {
-  BEGIN: 'Take a moment for yourself. Pinch when you are ready to start. You can pinch anytime to move on.',
-  SIT_DOWN: 'If you can, sit down for a moment.',
-  SUPPORT: 'Notice the support of your seat or the ground.',
-  BREATH_INTRO: 'Breathe gently, at your own pace.',
-  BREATHE_IN: 'Breathe in…',
-  TOP_UP: 'A little more.',
-  HOLD: 'Hold. One, two, three.',
-  BREATHE_OUT: '…and out.',
-  BEADS: 'Turn the beads, one at a time. Swipe your thumb up or down.',
-  FINGERS: 'Slowly rub your thumb against your fingertips. Notice how it feels.',
-  LOOK_AROUND: "Now, notice what's around you.",
-  SMELL: 'If you like, bring it close and notice its smell.',
-  TEMPERATURE: 'Gently touch it, and notice if it feels warm or cool.',
-  LISTEN: 'Notice one sound around you.',
-  GAZE: 'Follow the light with a slow turn of your head.',
-  GAZE_DOWN: 'Now look down at your hands.',
-  COMFORTABLE: 'Take a moment to get comfortable. You can fix your hair, your clothes, or how you sit.',
-  END: "Whenever you're ready, take your next step. Move forward at your own pace.",
-  QUICK: "They're calling you. You're ready.",
+  BEGIN: 'Take a moment.',
+  SIT_DOWN: 'Sit down, if you can.',
+  SUPPORT: 'Feel the support beneath you.',
+  /** One line per breath cycle, spoken as the inhale starts. */
+  BREATH_1: 'Take a slow breath in... and breathe out.',
+  BREATH_2: 'Again... breathe in... and slowly breathe out.',
+  BEADS: 'Now, gently roll your fingers.',
+  FINGERS: 'Feel your fingertips.',
+  LOOK_AROUND: 'Take a look around you.',
+  FIND_OBJECT: 'Find one object nearby.',
+  NOTICE_OBJECT: 'Notice its color... its shape... and its texture.',
+  TOUCH: "Notice what you're touching.",
+  TAKE_YOUR_TIME: 'Take your time.',
+  LISTEN: 'Now, notice one sound around you.',
+  JUST_NOTICE: "You don't need to react to it. Just notice it.",
+  GAZE: 'Slowly look around.',
+  COMFORTABLE: 'Adjust your hair or clothing if you need to.',
+  CHECK_CAMERA: "When you're ready, check your camera and framing.",
+  END: 'Move forward at your own pace.',
+  QUICK: "You're ready.",
 } as const;
 
-/** Script.feature: "Something blue" → "Find something blue." */
-export function featureLine(feature: string): string {
-  return `Find ${feature.charAt(0).toLowerCase()}${feature.slice(1)}.`;
-}
+export type ScriptLine = (typeof SCRIPT)[keyof typeof SCRIPT];
 
 /** Phone caption after every ending (SessionEngine.kt:395); never on the lens. */
 export const CAPTION_OFF = 'Glasses are off. Good luck.';
@@ -58,12 +58,6 @@ export const LENS = {
   // #5
   BEADS_TITLE: 'Turn the beads',
   BEADS_HINT: 'Swipe your thumb up or down',
-  // #10
-  GAZE_RIGHT: 'Look right',
-  GAZE_LEFT: 'Look left',
-  GAZE_UP: 'Look up',
-  GAZE_DOWN: 'Look at your hands',
-  GAZE_GONE: 'Look around slowly',
   // #11
   COMFORTABLE_TITLE: 'Get comfortable',
   COMFORTABLE_SUB: 'Hair, clothes, posture',

@@ -31,6 +31,7 @@ extension. Keys: **Enter** = pinch (Select), **arrows** = swipe (Previous / Next
 | `?preset=b` | Which preset items "find three" shows |
 | `?sense=scent` | Sense branch after the third item (`scent` / `temperature`) |
 | `?voice=0` | Mute the spoken guidance |
+| `?seed=7` | Seed for the guiding light's random route in #10 (default `1`); the same URL gives the same route on every take |
 
 ## Deploy
 

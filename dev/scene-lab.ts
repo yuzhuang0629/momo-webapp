@@ -6,6 +6,8 @@
 import type {GlassCard} from '../src/cards';
 import type {LensScene} from '../src/contracts';
 import {createScene} from '../src/scene';
+import {seededRandom} from '../src/engine/engine';
+import {DEFAULT_SEED} from '../src/engine/director';
 
 const FRAME_MS = 33;
 
@@ -15,7 +17,12 @@ const RC = (k: number): string => `Reconnect · ${k} of 6`;
 
 /** #6 grew from 12 s to 14 s (SessionConfig 20:15): everything after it starts this much later. */
 const FINGERS_GROWTH = 2000;
-const shifted = (t: number): number => (t >= 90000 ? t + FINGERS_GROWTH : t);
+/** #10 is one 11 s move + 1.8 s fade (SessionEngine 21:06) instead of 23.25 + 1.8 s: #11 onwards starts 12.25 s earlier. */
+const GAZE_GROWTH = -12250;
+const shifted = (t: number): number => (t >= 90000 ? t + FINGERS_GROWTH : t) + (t >= 170650 ? GAZE_GROWTH : 0);
+
+/** The engine's gaze direction for a seed (SessionEngine.expandView: the first draw of the PRNG). */
+const gazeAngle = (seed: number): number => seededRandom(seed)() * 360;
 
 /** The nominal 1× session (01-flow-and-copy §3.1), no pinches, preset 3. */
 function flow(opts: {ripple: boolean; scent: boolean}): Ev[] {
@@ -48,16 +55,9 @@ function flow(opts: {ripple: boolean; scent: boolean}): Ev[] {
   });
   at(120600, {kind: 'Sense', sense: opts.scent ? 'SCENT' : 'TEMPERATURE'});
   at(130600, {kind: 'SoundRings', prompt: 'One sound around you', title: 'Listen', meta: RC(5)});
-  const g = (time: number, target: 'CENTER' | 'RIGHT' | 'LEFT' | 'UP' | 'DOWN' | 'GONE', instruction: string): void =>
-    at(time, {kind: 'Gaze', target, instruction, meta: RC(6)});
-  g(145600, 'RIGHT', 'Look right');
-  g(150100, 'CENTER', 'Look right');
-  g(151850, 'LEFT', 'Look left');
-  g(156350, 'CENTER', 'Look left');
-  g(158100, 'UP', 'Look up');
-  g(162600, 'CENTER', 'Look up');
-  g(164350, 'DOWN', 'Look at your hands');
-  g(168850, 'GONE', 'Look around slowly');
+  // Out once (move 7 s + hold 4 s), then the light fades (1.8 s).
+  at(145600, {kind: 'Gaze', target: 'AWAY', instruction: '', meta: RC(6), angleDeg: gazeAngle(DEFAULT_SEED)});
+  at(156600, {kind: 'Gaze', target: 'GONE', instruction: '', meta: RC(6)});
   at(170650, {kind: 'Text', title: 'Get comfortable', subtitle: 'Hair, clothes, posture', obj: 'Stem', over: 'Re-enter'});
   if (opts.ripple) ev.push({at: shifted(182650), ripple: true});
   at(182650, {kind: 'Text', title: "Whenever you're ready", subtitle: 'Take your next step', pose: 'Seed'});
@@ -79,14 +79,14 @@ function quick(): Ev[] {
 const OFFSETS: Record<string, number> = Object.fromEntries(Object.entries({
   intro: 0, introExit: 10000, support: 13000, breath: 36800, inhale: 39800, exhale: 42800,
   beads: 55800, beadsTurn: 66100, fingers: 78600, find: 90600, find2: 100600, find3: 110600,
-  sense: 120600, listen: 130600, gaze: 145600, gazeLeft: 151850, gazeUp: 158100, gazeDown: 164350,
-  gazeGone: 168850, comfortable: 170650, end: 182650, off: 188650, blank: 190450, quick: 140600,
+  sense: 120600, listen: 130600, gaze: 145600,
+  gazeGone: 156600, comfortable: 170650, end: 182650, off: 188650, blank: 190450, quick: 140600,
 }).map(([k, v]) => [k, shifted(v)]));
 
 const DURATIONS: Record<string, number> = {
   intro: 10000, introExit: 3000, support: 23800, breath: 3000, inhale: 3000, exhale: 5000,
   beads: 22800, beadsTurn: 12500, fingers: 14000, find: 10000, find2: 10000, find3: 10000,
-  sense: 10000, listen: 15000, gaze: 25050, gazeLeft: 6250, gazeUp: 6250, gazeDown: 4500,
+  sense: 10000, listen: 15000, gaze: 11000,
   gazeGone: 1800, comfortable: 12000, end: 6000, off: 1800, blank: 2000, quick: 6600,
 };
 

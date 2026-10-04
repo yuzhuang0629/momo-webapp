@@ -1,4 +1,4 @@
-// What the lens shows. TypeScript port of momo-android glasses/GlassCard.kt (snapshot 18:25,
+// What the lens shows. TypeScript port of momo-android glasses/GlassCard.kt (snapshot 20:54,
 // 2026-10-03). The engine emits cards; the scene morphs toward the latest one.
 
 export type Pose = 'Seed' | 'Orb' | 'Small' | 'Ring' | 'Cool' | 'Steady' | 'Line' | 'Dim' | 'Exhale';
@@ -7,7 +7,8 @@ export type ObjectKind =
   | 'Hand' | 'Feet' | 'Flower' | 'Plant' | 'Cup' | 'Scent' | 'Fabric' | 'Stem'
   | 'Stones' | 'Bubble' | 'Bowl' | 'Firefly' | 'Seat' | 'Fingers' | 'Look';
 
-export type GazeTarget = 'CENTER' | 'RIGHT' | 'LEFT' | 'UP' | 'DOWN' | 'GONE';
+/** Where the guiding light goes in "expand your view" (USER_FLOW #10, Figma 9.1): home, out along the Gaze card's angleDeg, or gone. */
+export type GazeTarget = 'CENTER' | 'AWAY' | 'GONE';
 
 export type BreathPhase = 'INHALE' | 'TOP_UP' | 'HOLD' | 'EXHALE';
 
@@ -58,7 +59,8 @@ export type GlassCard =
   | {kind: 'Beads'; turned: number; total: number; dir?: number; guide?: boolean; meta?: string | null}
   /** Start screen; merging = un-draw back to the centre dot on exit. Durations already scaled. */
   | {kind: 'Intro'; merging: boolean; durationMs: number; fadeOutMs?: number}
-  | {kind: 'Gaze'; target: GazeTarget; instruction: string; meta?: string | null}
+  /** Guiding light with a tail (USER_FLOW #10). angleDeg: screen angle (0 = right, 90 = down) for AWAY. */
+  | {kind: 'Gaze'; target: GazeTarget; instruction: string; meta?: string | null; angleDeg?: number}
   | {kind: 'Steps'; nodes: string[]; active: number}
   | {kind: 'Phrase'; cue: string; phrase: string}
   | {kind: 'Choice'; options: string[]; selected: number; dir?: number; confirmed?: boolean}

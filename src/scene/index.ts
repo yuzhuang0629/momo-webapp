@@ -9,9 +9,9 @@ import {beadPos, drawBeads, prebakeBeads, warmBeads} from './beads';
 import {copyFor} from './copy';
 import {drawFind, warmFind} from './find';
 import {drawFingers, prebakeFingers} from './fingers';
-import {GAZE_HOME_X, GAZE_HOME_Y, TRAIL_SAMPLE_MS, drawGaze, warmGaze} from './gaze';
+import {GAZE_HOME_X, GAZE_HOME_Y, TRAIL_SAMPLE_MS, drawGaze, gazeAwayPoint, warmGaze} from './gaze';
 import {drawIcons, warmIcons} from './icons';
-import {drawListen, drawRipples, prebakeListen, stepListen, warmListen} from './listen';
+import {drawListen, drawRipples, prebakeListen, warmListen} from './listen';
 import {LOGO_DONE, drawIntro, introT, warmIntro} from './logo';
 import {drawMomo, warmMomo} from './momo';
 import {ACCENT, MINT, WHITE, hexRgb, type Rgb} from './palette';
@@ -256,11 +256,15 @@ class GlassScene implements LensScene {
           s.gazeY.set(GAZE_HOME_Y);
           s.trail.clear();
         }
-        const [tx, ty] = card.target === 'RIGHT' ? [545, GAZE_HOME_Y] : card.target === 'LEFT' ? [55, GAZE_HOME_Y]
-          : card.target === 'UP' ? [GAZE_HOME_X, 80] : card.target === 'DOWN' ? [GAZE_HOME_X, 405] // above the caption (text box top 469)
-          : [GAZE_HOME_X, GAZE_HOME_Y];
-        s.gazeX.to(tx);
-        s.gazeY.to(ty);
+        if (card.target === 'AWAY') {
+          // Out along the card's angle as far as the frame allows (GS:590-597).
+          const [tx, ty] = gazeAwayPoint(card.angleDeg ?? 0);
+          s.gazeX.to(tx);
+          s.gazeY.to(ty);
+        } else {
+          s.gazeX.to(GAZE_HOME_X);
+          s.gazeY.to(GAZE_HOME_Y);
+        }
         if (card.target === 'GONE') s.gazeOp.to(0, springSpec(3, 1));
         else s.gazeOp.to(1);
         s.texts.caption(copyFor(card), CAPTION_469);
@@ -363,7 +367,6 @@ class GlassScene implements LensScene {
     s.clock.now += ms;
     s.runLaters();
     stepBreath(s);
-    if (s.mode === 'RINGS') stepListen(s, dt);
     // Gaze: step its springs in 60 Hz slices and sample the trail after each (mirror density).
     if (s.gazeOp.value > 0.003 || s.gazeOp.target > 0) this.stepGaze(before, ms);
     else {

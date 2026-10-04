@@ -1,10 +1,11 @@
 // Rub your fingers (USER_FLOW #6), the team's 5.0摩擦手指 (Figma 5.0 → 5.3 → 5.1): GlassScene.kt
 // drawFingers / drawFingersHand / drawFingersThumb (GS:1414-1488, constants GS:1958-1980).
 //
-// The thumb rubs, 2.4 s a rub (pressed and dragged down for 62 %, lifted back up), each rub carrying
-// the bracelet one bead once the tip is halfway; the far beads (60 %) sit behind the hand, the near
-// ones (50 %) in front. After two rubs the bracelet, its track and the arrow fade (2 s), the hand
-// and thumb stay at 20 %, and the two dots, the dotted line and the caption fade in (1.6 s); the
+// The thumb rubs, 2.4 s a rub (5.1摩擦手指: rests at the top 16 %, pressed and dragged down 40 % with
+// the beads sliding along with the tip, rests at the bottom 16 %, lifted back up), each rub carrying
+// the bracelet one bead; the far beads (60 %) sit behind the hand, the near ones (50 %) in front.
+// After two rubs the bracelet, its track and the arrow fade (2 s), the hand and thumb stay at 30 %,
+// and the two dots, the dotted line and the caption fade in (1.6 s); the
 // dots brighten in turn with the thumb. Reduce motion: the finished page, nothing moving.
 import {FINGERS_LINE} from './copy';
 import {BEAD_Z_HAND, beadLayout, drawBeadArrow, drawBeadSet, drawBeadTrack, smoothstep} from './beads';
@@ -14,11 +15,12 @@ import type {State} from './state';
 import {captionSprite, fontReady} from './text';
 
 const PERIOD = 2.4; // one rub (s)
-const DRAG = 0.62; // share of a rub spent dragging
+const HOLD = 0.16; // share of a rub the thumb rests at each end
+const DRAG = 0.4; // share spent dragging down; the rest is the lift back up
 const AMP = 11; // degrees the thumb swings
 const RUBS = 2; // rubs before the bracelet fades for good
 const FADE = 2;
-const HAND_END = 0.2; // the hand and thumb stay at 20 %
+const HAND_END = 0.3; // the hand and thumb stay at 30 %
 const PAGE_IN = 1.6;
 const HAND_BOX = [97.37, 18.8, 387.3, 493.4] as const; // clip box; the image is 109.5 % tall from −0.06 %
 const THUMB_BOX = [243.6, 179, 104.8, 145] as const; // turned −30.95° about its centre
@@ -144,22 +146,33 @@ export function drawFingers(ctx: CanvasRenderingContext2D, s: State, op: number,
   const cyc = reduceMotion ? 0 : t / PERIOD; // the thumb keeps rubbing after the bracelet is gone
   const n = Math.floor(cyc);
   const fr = cyc - n;
+  // 5.1摩擦手指: rest at the top | drag down, pad pressed, the beads sliding with the tip | rest at
+  // the bottom | lift back up (GS:1426-1435).
+  const t1 = HOLD, t2 = t1 + DRAG, t3 = t2 + HOLD;
   let ang: number;
-  let lift: number;
-  if (fr < DRAG) {
-    const x = fr / DRAG;
-    ang = AMP * (1 - 2 * (0.7 * x + 0.3 * smoothstep(x)));
-    lift = 0;
+  let lift = 0;
+  let press = 0;
+  let slide: number;
+  if (fr < t1) {
+    ang = AMP;
+    slide = 0;
+  } else if (fr < t2) {
+    const x = (fr - t1) / DRAG;
+    slide = 0.7 * x + 0.3 * smoothstep(x);
+    ang = AMP * (1 - 2 * slide);
+    press = Math.sin(Math.PI * x);
+  } else if (fr < t3) {
+    ang = -AMP;
+    slide = 1;
   } else {
-    const x = smoothstep((fr - DRAG) / (1 - DRAG));
+    slide = 1;
+    const x = smoothstep((fr - t3) / (1 - t3));
     ang = -AMP + 2 * AMP * x;
     lift = Math.sin(Math.PI * x);
   }
-  const press = fr < DRAG ? Math.sin((Math.PI * fr) / DRAG) : 0;
-  // The bracelet rolls one place once the tip is halfway through the stroke.
   const beads = vis > 0.003;
   if (beads) {
-    beadLayout(n + smoothstep((fr - DRAG * 0.5) / 0.2) - 1);
+    beadLayout(n + slide - 1);
     drawBeadTrack(ctx, 0.6 * vis * op);
     drawBeadSet(ctx, 0.6 * vis * op, -Infinity, BEAD_Z_HAND);
   }

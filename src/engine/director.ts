@@ -4,6 +4,8 @@ import {DEFAULT_PRESET_ID, isPresetId} from './presets';
 
 const MIN_SPEED = 0.1;
 const MAX_SPEED = 4;
+/** ?seed default: the route the team reviews. */
+export const DEFAULT_SEED = 1;
 const FIRST_STEP = 2;
 const LAST_STEP = 12;
 
@@ -21,7 +23,8 @@ function flag(value: string | null, fallback: boolean): boolean {
 
 /**
  * ?speed=0.1…4 (default 1) · ?step=2…12 · ?autostart=1 · ?preset=1|2|3|4|a|b|c (default a)
- * · ?sense=scent|temperature (default: the preset's own branch) · ?voice=0 (default on).
+ * · ?sense=scent|temperature (default: the preset's own branch) · ?voice=0 (default on)
+ * · ?seed=<int> (default 1; the gaze route).
  */
 export function readDirectorOptions(search: string): DirectorOptions {
   const q = new URLSearchParams(search);
@@ -42,6 +45,9 @@ export function readDirectorOptions(search: string): DirectorOptions {
       ? 'TEMPERATURE'
       : null;
 
+  const seedRaw = Number.parseInt(q.get('seed') ?? '', 10);
+  const seed = Number.isInteger(seedRaw) ? seedRaw >>> 0 : DEFAULT_SEED;
+
   return {
     speed,
     step,
@@ -49,5 +55,6 @@ export function readDirectorOptions(search: string): DirectorOptions {
     preset,
     sense,
     voice: flag(q.get('voice'), true),
+    seed,
   };
 }

@@ -98,8 +98,7 @@ export class State {
   readonly bloom = this.sp(0);
   breath: BreathSt | null = null;
 
-  // Listen (Figma 8.1): simulated room energy swells its dots (GS:68-69, GS:117-118).
-  readonly energy = [0.4, 0.4, 0.4];
+  // Listen (Figma 8.1 + 8.1.html): the dots turn on their own timeline from listenT0.
   readonly listenOp = this.sp(0);
   listenT0 = 0;
 
@@ -140,8 +139,9 @@ export class State {
 
   // Gaze (GS:111-114)
   readonly gazeOp = this.sp(0);
-  readonly gazeX = this.sp(300, springSpec(5, 1));
-  readonly gazeY = this.sp(250, springSpec(5, 1));
+  // One slow head turn: ~5 s to settle (GS:125-126, 21:06).
+  readonly gazeX = this.sp(300, springSpec(1.2, 1));
+  readonly gazeY = this.sp(250, springSpec(1.2, 1));
   readonly trail = new Trail();
   /** Virtual time of the last trail sample (sampled at a fixed 60 Hz). */
   trailAt = -1;

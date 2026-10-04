@@ -60,4 +60,6 @@ export interface DirectorOptions {
   sense: 'SCENT' | 'TEMPERATURE' | null;
   /** Voice lines on/off. URL ?voice=0 */
   voice: boolean;
+  /** Seed for the engine's PRNG (the gaze route), so every take of one URL is the same. URL ?seed=7 */
+  seed: number;
 }

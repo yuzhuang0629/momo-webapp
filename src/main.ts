@@ -50,7 +50,7 @@ function send(input: EngineInput): void {
 }
 
 hit.addEventListener('click', () => {
-  voice.unlock();
+  voice.unlock(engine.step);
   void keepDisplayAwake();
   if (engine.phase === 'SAFE_IDLE') {
     engine.start();
