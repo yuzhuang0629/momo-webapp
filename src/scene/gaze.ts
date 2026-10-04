@@ -86,18 +86,35 @@ export function drawGaze(ctx: CanvasRenderingContext2D, s: State, a: number): vo
       break;
     }
   }
-  if (tail && !Number.isNaN(px)) {
-    const dx = x - px, dy = y - py, d = Math.hypot(dx, dy);
-    if (d > 3) {
-      const len = Math.min(TAIL_LEN, d * 2.5);
-      ctx.save();
-      ctx.globalAlpha = a > 1 ? 1 : a;
-      ctx.translate(x, y);
-      ctx.rotate(Math.atan2(-dy, -dx));
-      ctx.scale(len / TAIL_LEN, 1);
-      ctx.drawImage(tail, -TAIL_PAD, -TAIL_PAD - TAIL_W / 2);
-      ctx.restore();
-    }
+  // The tail and the light fade as one picture (Android 23:00, layered()), so the tail's root never
+  // shows through a half-faded light; the root starts at the light's edge, not its centre.
+  const moving = tail !== null && !Number.isNaN(px) && Math.hypot(x - px, y - py) > 3;
+  const target = a < 0.999 && moving ? groupLayer() : ctx;
+  if (target !== ctx) {
+    target.setTransform(1, 0, 0, 1, 0, 0);
+    target.clearRect(0, 0, 600, 600);
   }
-  drawGlowDot(ctx, x, y, DOT_R, a, DOT_GLOW_17);
+  if (moving && tail) {
+    const dx = x - px, dy = y - py, d = Math.hypot(dx, dy);
+    const len = Math.min(TAIL_LEN, d * 2.5);
+    target.save();
+    target.translate(x - (dx / d) * DOT_R, y - (dy / d) * DOT_R); // root on the light's edge
+    target.rotate(Math.atan2(-dy, -dx));
+    target.scale(len / TAIL_LEN, 1);
+    target.drawImage(tail, -TAIL_PAD, -TAIL_PAD - TAIL_W / 2);
+    target.restore();
+  }
+  drawGlowDot(target, x, y, DOT_R, target === ctx ? a : 1, DOT_GLOW_17);
+  if (target !== ctx) {
+    ctx.globalAlpha = a;
+    ctx.drawImage(target.canvas, 0, 0);
+    ctx.globalAlpha = 1;
+  }
+}
+
+let group: CanvasRenderingContext2D | null = null;
+/** Offscreen 600×600 layer for fading the tail and the light together (only while both fade). */
+function groupLayer(): CanvasRenderingContext2D {
+  group ??= ctx2d(newCanvas(600, 600));
+  return group;
 }

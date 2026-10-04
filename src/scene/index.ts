@@ -22,6 +22,8 @@ import {T_RISE, drawSupport, prebakeSupport, warmSupport} from './support';
 import {CAPTION_462, CAPTION_467, CAPTION_469, CAPTION_471, CAPTION_509, FIND_WRAP, Roles, prebakeCommon} from './text';
 
 const RIPPLE_LIFE_MS = 1800;
+/** Figma frame 17's corner radius, applied to every screen. */
+const FRAME_CORNER = 18;
 
 class GlassScene implements LensScene {
   reducedMotion = false;
@@ -429,6 +431,13 @@ class GlassScene implements LensScene {
     ctx.save();
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
+    // Every screen has the display's rounded corners (Figma frame 17: radius 18; Android 23:00):
+    // black (see-through) outside, the lens background inside, and everything clipped to it.
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, 600, 600);
+    ctx.beginPath();
+    ctx.roundRect(0, 0, 600, 600, FRAME_CORNER);
+    ctx.clip();
     ctx.fillStyle = LENS_BG;
     ctx.fillRect(0, 0, 600, 600);
     ctx.lineCap = 'round';

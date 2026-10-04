@@ -48,7 +48,7 @@ export const FLOW_ORDER: readonly ScriptLine[] = [
   SCRIPT.TOUCH, SCRIPT.TAKE_YOUR_TIME, // #8
   SCRIPT.LISTEN, SCRIPT.JUST_NOTICE, // #9
   SCRIPT.GAZE, // #10
-  SCRIPT.COMFORTABLE, SCRIPT.CHECK_CAMERA, // #11
+  // (#11 "get comfortable" was dropped 2026-10-04; its two recordings stay mapped above, unused.)
   SCRIPT.END, // #12
   SCRIPT.BEGIN,
 ];
@@ -64,7 +64,7 @@ const STEP_FIRST_LINE: Readonly<Record<number, ScriptLine>> = {
   8: SCRIPT.TOUCH,
   9: SCRIPT.LISTEN,
   10: SCRIPT.GAZE,
-  11: SCRIPT.COMFORTABLE,
+  11: SCRIPT.END, // #11 was dropped: a jump there lands on the ending
   12: SCRIPT.END,
 };
 

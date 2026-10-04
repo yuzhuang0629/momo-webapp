@@ -74,9 +74,6 @@ export interface Timings {
   readonly gazeMove: number;
   /** … then it rests there before it fades. */
   readonly gazeHold: number;
-  readonly comfortable: number;
-  /** #11: "Adjust your hair or clothing…" … then "When you're ready, check your camera and framing." */
-  readonly comfortableSecondLine: number;
   readonly end: number;
   readonly quick: number;
   readonly fade: number;
@@ -118,8 +115,6 @@ export const DEFAULT_TIMINGS: Timings = {
   listenSecondLine: 6_000,
   gazeMove: 7_000,
   gazeHold: 4_000,
-  comfortable: 12_000,
-  comfortableSecondLine: 5_000,
   /** #12 orbit.html: hold .8 + orbit 9 + closed .7 + fade 2.2 s. */
   end: 12_700,
   quick: 4_800,

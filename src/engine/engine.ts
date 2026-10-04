@@ -189,7 +189,6 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
   function* session(from: number, autostart: boolean): Co {
     if (from <= 4) yield* pauseStage(from, autostart);
     if (from <= 10) yield* reconnectStage(from);
-    if (from <= 11) yield* reenterStage();
     yield* endCompanionship();
   }
 
@@ -402,21 +401,12 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
     yield* pause(t.fade);
   }
 
-  // RE-ENTER (#11) and END (#12)
-
-  function* reenterStage(): Co {
-    setPhase('REENTER');
-    music('OFF');
-    setStep(11, 'get comfortable');
-    show({kind: 'Text', title: LENS.COMFORTABLE_TITLE, subtitle: LENS.COMFORTABLE_SUB, pose: 'Orb', obj: 'Stem', over: LENS.REENTER_META});
-    say(SCRIPT.COMFORTABLE);
-    if (yield* pinch(t.comfortableSecondLine)) return;
-    say(SCRIPT.CHECK_CAMERA);
-    yield* pinch(t.comfortable - t.comfortableSecondLine);
-  }
+  // END (#12). The old #11 "get comfortable" screen was dropped (Android 2026-10-04): after the slow
+  // head turn the ending plays straight away.
 
   function* endCompanionship(): Co {
     setPhase('END');
+    music('OFF');
     setStep(12, 'end');
     // Figma Component 10: the light runs once round the ring, then the picture fades; a pinch exits early (SE:359-369).
     show({kind: 'Ending', durationMs: s(t.end)});
