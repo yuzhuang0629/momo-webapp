@@ -20,6 +20,8 @@ const DISPLAY_SCALE = 0.6;
 const DISPLAY_CY = 0.46;
 /** The display's own corner radius (Figma frame 17: 18 of 600). */
 const DISPLAY_CORNER = 18 / 600;
+/** The display is see-through on the glasses: let the room show through a little. */
+const DISPLAY_ALPHA = 0.8;
 
 type Box = {x: number; y: number; w: number; h: number};
 
@@ -138,6 +140,7 @@ export function createSimView(photoUrl: string): SimView {
       ctx.beginPath();
       ctx.roundRect(x, y, s, s, s * DISPLAY_CORNER);
       ctx.clip();
+      ctx.globalAlpha = DISPLAY_ALPHA;
       ctx.drawImage(lens, x, y, s, s);
       ctx.restore();
     },
