@@ -9,7 +9,7 @@
 import type {BreathPhase, GlassCard, SenseKind} from '../cards';
 import type {DirectorOptions, EngineHost, EngineInput, MusicLevel, SessionEngine} from '../contracts';
 import {DEFAULT_CONFIG, RECONNECT_STEP_NUMBER, RECONNECT_STEPS, scaled, type SessionConfig} from './config';
-import {colorAt, labelAt, presetById} from './presets';
+import {colorAt, isColorAt, labelAt, presetById} from './presets';
 import {CAPTION_OFF, LENS, reconnectMeta, SCRIPT} from './script';
 
 /** Session states (SessionState.kt). */
@@ -356,7 +356,9 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
   /** #7 Three things by feature: LOOK → NOTICE (tinted circle) → ITEM (cup) per item (SE:306-322). */
   function* findThree(): Co {
     setStep(7, `find three (${findSet.name})`);
-    // Per item (Android 21:54): 6.1 "Take a look around you." → 6.2 "Notice its color…" → 6.3 "Find one object nearby."
+    // Two frames per item (Android 23:19): 6.1 "Take a Look Around." with "Take a look around you.", then
+    // 6.2 (coloured circle) for a colour feature or 6.3 (the dotted cup) for a shape / material one,
+    // with "Notice its color... its shape... and its texture.".
     for (let i = 0; i < findSet.features.length; i++) {
       const label = labelAt(findSet, i);
       const colorHex = colorAt(findSet, i);
@@ -364,12 +366,9 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
       show({kind: 'Find', stage: 'LOOK', label, colorHex, index: i, total});
       say(SCRIPT.LOOK_AROUND);
       yield* pinch(t.findLook, 'pinch → notice');
-      show({kind: 'Find', stage: 'NOTICE', label, colorHex, index: i, total});
+      show({kind: 'Find', stage: isColorAt(findSet, i) ? 'NOTICE' : 'ITEM', label, colorHex, index: i, total});
       say(SCRIPT.NOTICE_OBJECT); // the lens names the feature ("Notice the White Item Nearby.")
-      if (yield* pinch(t.findNotice, 'pinch → next item')) continue;
-      show({kind: 'Find', stage: 'ITEM', label, colorHex, index: i, total});
-      say(SCRIPT.FIND_OBJECT);
-      yield* pinch(t.findItem, 'pinch → next item');
+      yield* pinch(t.findNotice, 'pinch → next item');
     }
   }
 

@@ -19,9 +19,10 @@ export interface FindSet {
   readonly colors: readonly [string, string, string];
 }
 
-export type PresetId = '1' | '2' | '3' | '4' | 'a' | 'b' | 'c';
+export type PresetId = '1' | '2' | '3' | '4' | 'a' | 'b' | 'c' | 'd';
 
-export const DEFAULT_PRESET_ID: PresetId = 'a';
+/** The demo table: the team puts a cup of coffee on it, so the web app's default is set d. */
+export const DEFAULT_PRESET_ID: PresetId = 'd';
 
 type SetData = Omit<FindSet, 'id' | 'name'>;
 
@@ -58,6 +59,15 @@ const COFFEE: SetData = {
   colors: ['#FFFFFF', '#FFA552', '#FFFFFF'],
 };
 
+// Web demo default (2026-10-04): the team's table has a cup of coffee. Item 3 is that cup: 6.1, then
+// the cup page (its shape), then #8 "Notice Its Scent.".
+const DESK: SetData = {
+  features: ['Something round', 'Something blue', 'Your cup of coffee'],
+  touchTargetHasSmell: true,
+  labels: ['Round Item', 'Blue Item', 'Coffee Cup'],
+  colors: ['#FFFFFF', '#6FA8FF', '#FFFFFF'],
+};
+
 export const FIND_SETS: Readonly<Record<PresetId, FindSet>> = {
   '1': {id: '1', name: 'preset 0: round / blue / soft', ...P0},
   '2': {id: '2', name: 'preset 1: rectangular / white / sleeve', ...P1},
@@ -66,6 +76,7 @@ export const FIND_SETS: Readonly<Record<PresetId, FindSet>> = {
   a: {id: 'a', name: 'classic (preset 0, temperature)', ...P0},
   b: {id: 'b', name: 'warm desk (preset 2, temperature)', ...P2},
   c: {id: 'c', name: 'coffee (scent)', ...COFFEE},
+  d: {id: 'd', name: 'demo desk: round / blue / the coffee (scent)', ...DESK},
 };
 
 export function isPresetId(id: string): id is PresetId {
@@ -117,4 +128,10 @@ export function labelAt(set: FindSet, i: number): string {
 export function colorAt(set: FindSet, i: number): string {
   const color = set.colors[i];
   return color !== undefined && HEX.test(color) ? color : colorFrom(set.features[i] ?? '');
+}
+
+/** Whether item i is a colour (Figma 6.2, the coloured circle) rather than a shape or material (6.3, the cup): VisionResult.isColor. */
+export function isColorAt(set: FindSet, i: number): boolean {
+  const words = `${labelAt(set, i)} ${set.features[i] ?? ''}`.toLowerCase().split(/[^a-z]+/);
+  return COLOR_HEX.some(([k]) => words.includes(k));
 }

@@ -59,10 +59,8 @@ export interface Timings {
   readonly fingers: number;
   /** #7 per item: 6.1 "Take a Look Around." … */
   readonly findLook: number;
-  /** … 6.2 "Notice the ___ Nearby." with the coloured circle … */
+  /** … then one frame: 6.2 (coloured circle) for a colour, 6.3 (the dotted cup) for a shape / material. */
   readonly findNotice: number;
-  /** … 6.3 the same words with the dotted cup. */
-  readonly findItem: number;
   /** #8 "Notice Its Scent." / "Feel Its Temperature." */
   readonly sense: number;
   /** #8: "Notice what you're touching." … then "Take your time." */
@@ -93,8 +91,8 @@ export const DEFAULT_TIMINGS: Timings = {
   supportSit: 7_800,
   supportRings: 16_000,
   breathIntro: 3_000,
-  calmIn: 3_000,
-  calmOut: 5_000,
+  calmIn: 4_000, // 4 s in / 6 s out = 6 breaths/min, exhale longer (resonance breathing; Van Diest 2014)
+  calmOut: 6_000,
   sighIn: 2_000,
   sighTopUp: 1_000,
   sighOut: 5_000,
@@ -107,8 +105,7 @@ export const DEFAULT_TIMINGS: Timings = {
   /** #6: two rubs (4.8 s), the bracelet fades (2 s), the caption page fades in (1.6 s), then ~5.6 s to read it. */
   fingers: 14_000,
   findLook: 2_500,
-  findNotice: 3_500,
-  findItem: 4_000,
+  findNotice: 4_500,
   sense: 10_000,
   senseSecondLine: 5_000,
   listen: 15_000,
