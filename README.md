@@ -45,3 +45,10 @@ Meta AI app → Devices → your glasses → Record Display (or the glasses sett
 Display Recording). Each clip is at most 1 minute and includes the camera view and audio.
 For a clean lens-only layer, record this page in Chrome on a black background and
 composite it over POV footage with a Screen/Add blend.
+
+## QR codes
+
+- `qr/momo-install-qr.png`: scan with the phone camera to add Momo to the glasses (Meta's install
+  link `fb-viewapp://web_app_deep_link?appName=Momo&appUrl=https%3A%2F%2Fmomo-webapp.vercel.app%2F`;
+  Developer Mode must be on in the Meta AI app). A plain URL QR is not recognised for installing.
+- `qr/momo-url-qr.png`: the plain URL, for opening the preview in a phone or desktop browser.
