@@ -15,6 +15,8 @@ export interface LensScene {
   ripple(): void;
   /** Forget everything and show black (used by the director's restart). */
   reset(): void;
+  /** Fade the lens background (LENS_BG) to this opacity (0…1) over ms; 0 ms = at once. */
+  setBackground(opacity: number, ms: number): void;
   /** When true (prefers-reduced-motion), jump animations to their end states. */
   reducedMotion: boolean;
 }
@@ -30,6 +32,8 @@ export interface EngineHost {
   click?(): void;
   /** Background music level (USER_FLOW 2.5); every change fades. */
   music?(level: MusicLevel): void;
+  /** Fade the lens background to this opacity (web 2026-10-04: 30 % while finding the object). */
+  background?(opacity: number): void;
 }
 
 export type MusicLevel = 'OFF' | 'LOW' | 'FULL';

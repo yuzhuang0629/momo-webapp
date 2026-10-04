@@ -10,6 +10,8 @@ import {createVoice} from './voice';
 
 const FRAME_MS = 1000 / 30; // the panel is 30 Hz; never run a 60 fps loop
 const MAX_STEP_MS = 50; // matches the spring integrator's dt cap
+/** How long the lens background takes to fade between levels. */
+const BG_FADE_MS = 1500;
 
 const canvas = document.getElementById('lens') as HTMLCanvasElement;
 const hit = document.getElementById('hit') as HTMLButtonElement;
@@ -40,6 +42,7 @@ const engine = createEngine(
     say: text => (text === SCRIPT.BEGIN ? voice.sayWhenReady(text, 600) : voice.say(text)),
     click: () => sfx.click(),
     music: level => music.level(level),
+    background: opacity => scene.setBackground(opacity, BG_FADE_MS),
     ripple: () => scene.ripple(),
     log: message => console.info(`[momo] ${message}`),
   },

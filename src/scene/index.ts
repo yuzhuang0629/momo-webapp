@@ -47,6 +47,21 @@ class GlassScene implements LensScene {
     warmMomo();
   }
 
+  setBackground(opacity: number, ms: number): void {
+    const s = this.s;
+    s.bgFrom = this.bgOpacity();
+    s.bgTo = Math.min(1, Math.max(0, opacity));
+    s.bgT0 = s.now;
+    s.bgMs = this.reducedMotion ? 0 : Math.max(0, ms);
+  }
+
+  private bgOpacity(): number {
+    const s = this.s;
+    if (s.bgMs <= 0) return s.bgTo;
+    const k = Math.min(1, Math.max(0, (s.now - s.bgT0) / s.bgMs));
+    return s.bgFrom + (s.bgTo - s.bgFrom) * k;
+  }
+
   reset(): void {
     this.s = new State();
   }
@@ -438,8 +453,12 @@ class GlassScene implements LensScene {
     ctx.beginPath();
     ctx.roundRect(0, 0, 600, 600, FRAME_CORNER);
     ctx.clip();
+    // The background can fade (web 2026-10-04: to 30 % while finding the object); black under it
+    // is see-through on the lens, so a lower opacity shows more of the world.
+    ctx.globalAlpha = this.bgOpacity();
     ctx.fillStyle = LENS_BG;
     ctx.fillRect(0, 0, 600, 600);
+    ctx.globalAlpha = 1;
     ctx.lineCap = 'round';
     ctx.setLineDash([]);
     // Each figure is drawn while its opacity > .003, so outgoing and incoming figures cross-fade.

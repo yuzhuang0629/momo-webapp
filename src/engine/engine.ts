@@ -159,6 +159,10 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
   const say = (line: string): void => host.say(line);
   /** Background music (USER_FLOW 2.5, SE music()): every change fades. */
   const music = (level: MusicLevel): void => host.music?.(level);
+  /** Lens background opacity (web): every change fades. */
+  const background = (opacity: number): void => host.background?.(opacity);
+  /** #7: the background while finding the object. */
+  const FIND_BG = 0.3;
 
   /** Waits for one of `kinds` or the scaled timeout; null on timeout (SE:99-107). */
   function* waitFor(ms: number, ...kinds: EngineInput[]): Co<EngineInput | null> {
@@ -369,13 +373,22 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
         show({kind: 'Blank'});
         yield* pause(t.findGap);
       }
+      // Web (2026-10-04): the olive background fades to 30 % while looking, so the world shows through.
+      if (i === 0) background(FIND_BG);
       show({kind: 'Find', stage: 'LOOK', label, colorHex, index: i, total});
       say(SCRIPT.LOOK_AROUND);
       yield* pinch(t.findLook, 'pinch → notice');
+      // A moment of empty lens between "Take a Look Around." and the item's page.
+      show({kind: 'Blank'});
+      yield* pause(t.findGap);
       show({kind: 'Find', stage: pageAt(findSet, i) === 'circle' ? 'NOTICE' : 'ITEM', label, colorHex, index: i, total});
       say(findSet.noticeLine ?? SCRIPT.NOTICE_OBJECT); // the lens names the feature ("Notice the White Item Nearby.")
       yield* pinch(t.findNotice, 'pinch → next item');
     }
+    // Before #8: the lens empties and the background fades back to full.
+    show({kind: 'Blank'});
+    background(1);
+    yield* pause(t.findGap);
   }
 
   /**
@@ -445,6 +458,7 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
   /** Every ending lands here. Kotlin's releaseAll() also stops speech (SE:388-397). */
   function safeIdle(): void {
     say('');
+    background(1);
     music('OFF');
     setPhase('SAFE_IDLE');
     show({kind: 'Blank'});

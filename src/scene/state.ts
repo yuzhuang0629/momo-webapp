@@ -165,6 +165,11 @@ export class State {
 
   icons: Icon[] = [];
   ripples: Ripple[] = [];
+  /** Lens background opacity, tweened linearly from bgFrom at bgT0 to bgTo over bgMs. */
+  bgFrom = 1;
+  bgTo = 1;
+  bgT0 = 0;
+  bgMs = 0;
 
   get now(): number {
     return this.clock.now;
