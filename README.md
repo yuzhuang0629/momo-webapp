@@ -31,7 +31,7 @@ extension. Keys: **Enter** = pinch (Select), **arrows** = swipe (Previous / Next
 | `?preset=b` | Which preset items "find three" shows (default `d`: one white item → temperature) |
 | `?sense=scent` | Sense branch after the third item (`scent` / `temperature`) |
 | `?voice=0` | Mute the spoken guidance |
-| `?sim=1` | Simulated wearer's view over a photo, plays by itself and replays (for phones / desktop) |
+| `?sim=1` | Simulated view: the glasses on a plain background, the display in the right lens; plays by itself and replays (for phones / desktop) |
 | `?seed=7` | Seed for the guiding light's random route in #10 (default `1`); the same URL gives the same route on every take |
 
 ## Deploy
@@ -53,5 +53,5 @@ composite it over POV footage with a Screen/Add blend.
   link `fb-viewapp://web_app_deep_link?appName=Momo&appUrl=https%3A%2F%2Fmomo-webapp.vercel.app%2F`;
   Developer Mode must be on in the Meta AI app). A plain URL QR is not recognised for installing.
 - `qr/momo-url-qr.png`: the plain URL, for opening the preview in a phone or desktop browser.
-- `qr/momo-sim-qr.png`: `?sim=1`, the simulated wearer's view: the lens over a desk photo through a
-  glasses frame, playing by itself on a loop (for people without the glasses).
+- `qr/momo-sim-qr.png`: `?sim=1`, the simulated view: a pair of glasses with the display in the
+  right lens, playing by itself on a loop (for people without the glasses).
