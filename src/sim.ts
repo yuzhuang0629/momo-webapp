@@ -75,7 +75,7 @@ export function createSimView(photoUrl: string): SimView {
       const [dx, dy, dw, dh] = [(W - photo.width * s) / 2, (H - photo.height * s) * 0.52, photo.width * s, photo.height * s];
       // A soft blur, so the room reads as background behind the display.
       const blur = Math.max(W, H) * PHOTO_BLUR;
-      if ('filter' in b) {
+      if (typeof b.filter === 'string') {
         b.filter = `blur(${blur}px)`;
         // Draw slightly oversized so the blurred edges don't fade in from the sides.
         b.drawImage(photo, dx - blur * 2, dy - blur * 2, dw + blur * 4, dh + blur * 4);
