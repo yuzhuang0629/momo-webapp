@@ -217,22 +217,32 @@ export function bakeText(lines: readonly string[], r: Role, x: number, y: number
   });
 }
 
-// ---------------------------------------------------------------- start screen text (GS:1337-1360)
+// ---------------------------------------------------------------- start screen text, Figma 16 (240-2022)
+// Text column at y 320: the title (48 px, line height 1.13), a 32 px gap, then the pill
+// (41.232 px tall). The frame's blurred photo + 30 % black is the world behind the lens, not
+// lens content, so it is not drawn.
 
-const INTRO_TITLE_PX = 40;
-const INTRO_TITLE_CY1 = 357.6;
-const INTRO_TITLE_CY2 = 402.8;
-const INTRO_PINCH_PX = 30;
-const INTRO_PINCH_CY = 478;
+const INTRO_TOP = 320;
+const INTRO_TITLE_PX = 48;
+const INTRO_TITLE_LH = INTRO_TITLE_PX * 1.13;
+const INTRO_TITLE_CY1 = INTRO_TOP + INTRO_TITLE_LH / 2;
+const INTRO_TITLE_CY2 = INTRO_TITLE_CY1 + INTRO_TITLE_LH;
+const INTRO_PINCH_PX = 36;
+const INTRO_PILL_H = 41.232;
+const INTRO_PILL_PAD_X = 20.614;
+const INTRO_PILL_TOP = INTRO_TOP + 2 * INTRO_TITLE_LH + 32;
+const INTRO_PINCH_CY = INTRO_PILL_TOP + INTRO_PILL_H / 2;
+/** Frame 240-2026's fill: rgba(56,56,56,.54) (hard-light in Figma; over black a dim grey). */
+const INTRO_PILL_FILL = 'rgba(56,56,56,0.54)';
 
-/** "Take a moment / for yourself." — 40 px, "moment" wght 600, white, glow 6.42 px @ .71. */
+/** "Take a Moment / for yourself." — 48 px Light, "Moment" Regular, white, glow 6.42 px @ .71. */
 export function bakeIntroTitle(): Sprite {
   const rows: Array<[number, Array<[string, number]>]> = [
-    [INTRO_TITLE_CY1, [['Take a ', 300], ['moment', 600]]],
+    [INTRO_TITLE_CY1, [['Take a ', 300], ['Moment', 400]]],
     [INTRO_TITLE_CY2, [['for yourself.', 300]]],
   ];
   const pad = glowPad(TEXT_GLOW_6_4);
-  return makeSprite(300 - 220 - pad, INTRO_TITLE_CY1 - 40 - pad, 300 + 220 + pad, INTRO_TITLE_CY2 + 30 + pad, (ctx) => {
+  return makeSprite(300 - 240 - pad, INTRO_TITLE_CY1 - 48 - pad, 300 + 240 + pad, INTRO_TITLE_CY2 + 36 + pad, (ctx) => {
     ctx.fillStyle = '#fff';
     setShadow(ctx, TEXT_GLOW_6_4, WHITE, 0.71);
     ctx.textAlign = 'left';
@@ -250,10 +260,15 @@ export function bakeIntroTitle(): Sprite {
   });
 }
 
-/** "Pinch to start" — 30 px wght 200, white, glow 9.31 px @ .5, no outline. */
+/** "Pinch to start" — 36 px wght 200, white, glow 9.31 px @ .5, on a radius-8 pill (padding 20.614). */
 export function bakeIntroPinch(): Sprite {
   const pad = glowPad(TEXT_GLOW_9_3);
-  return makeSprite(300 - 140 - pad, INTRO_PINCH_CY - 30 - pad, 300 + 140 + pad, INTRO_PINCH_CY + 25 + pad, (ctx) => {
+  const pillW = measure('Pinch to start', 200, INTRO_PINCH_PX, -0.011) + 2 * INTRO_PILL_PAD_X;
+  return makeSprite(300 - 160 - pad, INTRO_PINCH_CY - 32 - pad, 300 + 160 + pad, INTRO_PINCH_CY + 28 + pad, (ctx) => {
+    ctx.fillStyle = INTRO_PILL_FILL;
+    ctx.beginPath();
+    ctx.roundRect(300 - pillW / 2, INTRO_PILL_TOP, pillW, INTRO_PILL_H, 8);
+    ctx.fill();
     useFont(ctx, 200, INTRO_PINCH_PX, -0.011);
     ctx.fillStyle = '#fff';
     setShadow(ctx, TEXT_GLOW_9_3, WHITE, 0.5);
