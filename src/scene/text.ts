@@ -260,15 +260,30 @@ export function bakeIntroTitle(): Sprite {
   });
 }
 
-/** "Pinch to start" — 36 px wght 200, white, glow 9.31 px @ .5, on a radius-8 pill (padding 20.614). */
+let introPillW = 0;
+
+/**
+ * The pill behind "Pinch to start" (Frame 240-2026): radius 8, padding 20.614, fill
+ * rgba(56,56,56,.54) in hard-light, so it darkens whatever is behind it, as in Figma. Drawn live
+ * (one rounded rect) because the blend needs the background under it.
+ */
+export function drawIntroPill(ctx: CanvasRenderingContext2D, alpha: number): void {
+  if (alpha <= 0.003) return;
+  if (introPillW === 0) introPillW = measure('Pinch to start', 200, INTRO_PINCH_PX, -0.011) + 2 * INTRO_PILL_PAD_X;
+  ctx.save();
+  ctx.globalAlpha = alpha > 1 ? 1 : alpha;
+  ctx.globalCompositeOperation = 'hard-light';
+  ctx.fillStyle = INTRO_PILL_FILL;
+  ctx.beginPath();
+  ctx.roundRect(300 - introPillW / 2, INTRO_PILL_TOP, introPillW, INTRO_PILL_H, 8);
+  ctx.fill();
+  ctx.restore();
+}
+
+/** "Pinch to start" — 36 px wght 200, white, glow 9.31 px @ .5 (its pill is drawIntroPill). */
 export function bakeIntroPinch(): Sprite {
   const pad = glowPad(TEXT_GLOW_9_3);
-  const pillW = measure('Pinch to start', 200, INTRO_PINCH_PX, -0.011) + 2 * INTRO_PILL_PAD_X;
   return makeSprite(300 - 160 - pad, INTRO_PINCH_CY - 32 - pad, 300 + 160 + pad, INTRO_PINCH_CY + 28 + pad, (ctx) => {
-    ctx.fillStyle = INTRO_PILL_FILL;
-    ctx.beginPath();
-    ctx.roundRect(300 - pillW / 2, INTRO_PILL_TOP, pillW, INTRO_PILL_H, 8);
-    ctx.fill();
     useFont(ctx, 200, INTRO_PINCH_PX, -0.011);
     ctx.fillStyle = '#fff';
     setShadow(ctx, TEXT_GLOW_9_3, WHITE, 0.5);
