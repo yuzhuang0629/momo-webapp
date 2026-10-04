@@ -156,10 +156,10 @@ function frame(now: number): void {
   }
 }
 
-// ?sim=1: the glasses with the display in the right lens, for viewers on a phone or desktop (src/sim.ts).
+// ?sim=1: the desk photo through the glasses (two lenses), the display in the right lens, for viewers on a phone or desktop (src/sim.ts).
 const SIM_REPLAY_MS = 3000;
 let simIdleMs = 0;
-const sim = director.sim ? createSimView() : null;
+const sim = director.sim ? createSimView('/sim/workspace.webp') : null;
 if (sim) document.documentElement.classList.add('sim');
 
 function startLoop(): void {
