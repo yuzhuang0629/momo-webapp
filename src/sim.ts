@@ -22,6 +22,8 @@ const DISPLAY_CY = 0.46;
 const DISPLAY_CORNER = 18 / 600;
 /** The display is see-through on the glasses: let the room show through a little. */
 const DISPLAY_ALPHA = 0.8;
+/** Blur radius of the desk photo, relative to the longer screen side. */
+const PHOTO_BLUR = 0.004;
 
 type Box = {x: number; y: number; w: number; h: number};
 
@@ -70,7 +72,23 @@ export function createSimView(photoUrl: string): SimView {
     b.fillRect(0, 0, W, H);
     if (photoReady) {
       const s = Math.max(W / photo.width, H / photo.height);
-      b.drawImage(photo, (W - photo.width * s) / 2, (H - photo.height * s) * 0.52, photo.width * s, photo.height * s);
+      const [dx, dy, dw, dh] = [(W - photo.width * s) / 2, (H - photo.height * s) * 0.52, photo.width * s, photo.height * s];
+      // A soft blur, so the room reads as background behind the display.
+      const blur = Math.max(W, H) * PHOTO_BLUR;
+      if ('filter' in b) {
+        b.filter = `blur(${blur}px)`;
+        // Draw slightly oversized so the blurred edges don't fade in from the sides.
+        b.drawImage(photo, dx - blur * 2, dy - blur * 2, dw + blur * 4, dh + blur * 4);
+        b.filter = 'none';
+      } else {
+        // No canvas filter (older Safari): downscale and scale back up for a similar softness.
+        const small = document.createElement('canvas');
+        small.width = Math.max(1, Math.round(dw / (blur * 1.5)));
+        small.height = Math.max(1, Math.round(dh / (blur * 1.5)));
+        small.getContext('2d')?.drawImage(photo, 0, 0, small.width, small.height);
+        b.imageSmoothingQuality = 'high';
+        b.drawImage(small, dx, dy, dw, dh);
+      }
     }
     const v = b.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.max(W, H) * 0.75);
     v.addColorStop(0, 'rgba(0,0,0,0)');
