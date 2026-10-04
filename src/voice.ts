@@ -42,6 +42,8 @@ export interface Voice {
    * only start at the first pinch.
    */
   sayWhenReady(text: string, waitMs: number): void;
+  /** Download these lines' clips ahead (no sound; allowed before the first pinch). */
+  preload(lines: readonly string[]): void;
   stop(): void;
 }
 
@@ -195,6 +197,11 @@ export function createVoice(enabled: boolean): Voice {
       prefetchFrom(flowIndexOfStep(step));
       // Back (QuickExit) can come at any moment; its short clip follows the first few.
       want([clipFor(SCRIPT.QUICK)], true);
+    },
+    preload(lines) {
+      // Fetching is not sound: allowed before the first pinch. Nothing plays here.
+      if (!enabled || !clipsWork) return;
+      want(lines.map(clipFor));
     },
     sayWhenReady(text, waitMs) {
       if (!enabled || !unlocked) return;

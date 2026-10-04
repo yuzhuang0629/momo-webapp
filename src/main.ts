@@ -33,7 +33,9 @@ reducedMotion.addEventListener('change', () => (scene.reducedMotion = reducedMot
 const engine = createEngine(
   {
     show: card => scene.apply(card),
-    say: text => voice.say(text),
+    // "Take a moment." comes right at the first pinch: give its clip a moment to finish
+    // downloading if the preload hasn't, then fall back to speech (the start screen holds 2 s).
+    say: text => (text === SCRIPT.BEGIN ? voice.sayWhenReady(text, 600) : voice.say(text)),
     click: () => sfx.click(),
     ripple: () => scene.ripple(),
     log: message => console.info(`[momo] ${message}`),
@@ -54,7 +56,6 @@ function send(input: EngineInput): void {
   engine.input(input);
 }
 
-let firstPinch = true;
 hit.addEventListener('click', () => {
   voice.unlock(engine.step);
   sfx.unlock();
@@ -63,14 +64,12 @@ hit.addEventListener('click', () => {
     engine.start();
     return;
   }
-  // "Take a moment." belongs to the start screen, but sound is only allowed from the wearer's
-  // first pinch, which is the pinch that leaves it. Say it then: the logo's exit and the black
-  // hold take 3 s before #3's first line, so it fits (speech if the clip isn't down in 1.2 s).
-  const onStartScreen = firstPinch && engine.step === 2;
-  firstPinch = false;
   send('Select');
-  if (onStartScreen) voice.sayWhenReady(SCRIPT.BEGIN, 1200);
 });
+
+// Fetch the first lines while the start screen waits (no sound before a pinch), so "Take a
+// moment." can play the instant the wearer pinches. Delayed past the first-load window.
+window.setTimeout(() => voice.preload([SCRIPT.BEGIN, SCRIPT.SIT_DOWN, SCRIPT.SUPPORT]), 2500);
 
 hit.addEventListener('keydown', event => {
   const input: EngineInput | null =

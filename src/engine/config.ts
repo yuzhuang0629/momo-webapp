@@ -30,6 +30,8 @@ export interface Timings {
   /** The logo drawing itself in (every element is in by 4.8 s of logo.html's timeline). */
   readonly introOpen: number;
   readonly introAutoStart: number;
+  /** Web: after the start pinch, the start screen holds while "Take a moment." plays (~1.5 s clip, slower as speech). */
+  readonly introBeginHold: number;
   /** Exit: the logo un-draws to its centre dot … */
   readonly introMerge: number;
   /** … the dot and the words fade to black … */
@@ -86,6 +88,7 @@ export interface Timings {
 export const DEFAULT_TIMINGS: Timings = {
   introOpen: 4_800,
   introAutoStart: 10_000,
+  introBeginHold: 2_000,
   introMerge: 1_400,
   introFade: 1_000,
   introGap: 600,

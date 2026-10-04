@@ -208,10 +208,15 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
   function* startScreen(autostart: boolean): Co {
     setStep(2, 'start screen');
     show({kind: 'Intro', merging: false, durationMs: s(t.introOpen), fadeOutMs: 0});
-    say(SCRIPT.BEGIN);
     // Director ?autostart: leave as soon as the logo has drawn in instead of waiting for a pinch.
     const wait = autostart ? t.introOpen : t.introAutoStart;
-    yield* pinch(wait, 'pinch → start');
+    // Web: sound is only allowed from the wearer's first pinch, so "Take a moment." is said at the
+    // pinch, over the whole start screen, which holds until the line is done; pinches during the
+    // hold are dropped. Without a pinch (auto start) there is no sound to wait for.
+    if (yield* pinch(wait, 'pinch → start')) {
+      say(SCRIPT.BEGIN);
+      yield* pause(t.introBeginHold);
+    }
     show({kind: 'Intro', merging: true, durationMs: s(t.introMerge), fadeOutMs: s(t.introFade)});
     yield* pause(t.introMerge + t.introFade + t.introGap);
   }
