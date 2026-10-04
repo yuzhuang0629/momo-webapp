@@ -8,16 +8,17 @@ import {TOP_UP_FROM, drawBreathRing, stepBreath, warmBreath} from './breath';
 import {beadPos, drawBeads, prebakeBeads, warmBeads} from './beads';
 import {copyFor} from './copy';
 import {drawFind, warmFind} from './find';
-import {TRAIL_SAMPLE_MS, drawGaze, warmGaze} from './gaze';
+import {drawFingers, prebakeFingers} from './fingers';
+import {GAZE_HOME_X, GAZE_HOME_Y, TRAIL_SAMPLE_MS, drawGaze, warmGaze} from './gaze';
 import {drawIcons, warmIcons} from './icons';
-import {RINGS_CY, drawListen, drawRipples, stepListen} from './listen';
+import {drawListen, drawRipples, prebakeListen, stepListen, warmListen} from './listen';
 import {LOGO_DONE, drawIntro, introT, warmIntro} from './logo';
 import {drawMomo, warmMomo} from './momo';
 import {ACCENT, MINT, WHITE, hexRgb, type Rgb} from './palette';
 import {drawSense, warmSense} from './sense';
 import {State, type Mode} from './state';
 import {T_RISE, drawSupport, prebakeSupport, warmSupport} from './support';
-import {BREATH_CAPTION_CY, Roles, prebakeCommon} from './text';
+import {CAPTION_462, CAPTION_467, CAPTION_469, CAPTION_471, FIND_WRAP, Roles, prebakeCommon} from './text';
 
 const RIPPLE_LIFE_MS = 1800;
 
@@ -28,7 +29,7 @@ class GlassScene implements LensScene {
    * Bakes that need the font or the body PNGs, run one per frame (idle start-screen frames) so
    * no later transition pays for them. Each returns true when done, false to retry next frame.
    */
-  private prebake: Array<() => boolean> = [warmIntro, prebakeCommon, prebakeSupport, prebakeBeads];
+  private prebake: Array<() => boolean> = [warmIntro, prebakeCommon, prebakeSupport, prebakeBeads, prebakeFingers, prebakeListen];
 
   constructor() {
     // Bake the text-independent sprites up front so no glow is rasterised mid-animation.
@@ -38,6 +39,7 @@ class GlassScene implements LensScene {
     warmSense();
     warmBeads();
     warmGaze();
+    warmListen();
     warmIcons();
     warmMomo();
   }
@@ -49,8 +51,9 @@ class GlassScene implements LensScene {
   ripple(): void {
     const s = this.s;
     switch (s.mode) {
-      // No tap ripple on the Figma-exact screens (GS:298-305).
+      // No tap ripple on the Figma-exact screens (GS:347-354).
       case 'BLANK': case 'OFF': case 'INTRO': case 'SUPPORT': case 'FIND': case 'SENSE': case 'BREATH': case 'BEADS':
+      case 'FINGERS': case 'RINGS': case 'GAZE':
         return;
       case 'SWATCH':
         this.addRipple(300, 350, 0.5);
@@ -73,7 +76,6 @@ class GlassScene implements LensScene {
     o.steady.to(0);
     o.drift.to(0);
     s.guideOp.to(0);
-    for (const r of s.rings) r.op.to(0);
     if (card.kind !== 'Beads') s.beadsOp.to(0);
     if (card.kind !== 'Gaze') s.gazeOp.to(0);
     if (card.kind !== 'Support') s.supportOp.to(0, springSpec(100, 1));
@@ -82,8 +84,11 @@ class GlassScene implements LensScene {
       s.findCupOp.to(0);
     }
     if (card.kind !== 'Sense') s.senseOp.to(0);
+    if (card.kind !== 'SoundRings') s.listenOp.to(0);
+    if (card.kind !== 'Fingers') s.fingersOp.to(0, springSpec(100, 1));
     // A pinch ripple started on the previous screen must not spill onto a Figma-exact one.
-    if (card.kind === 'Intro' || card.kind === 'Support' || card.kind === 'Find' || card.kind === 'Sense' || card.kind === 'Breath' || card.kind === 'BreathStep' || card.kind === 'Beads') s.ripples = [];
+    if (card.kind === 'Intro' || card.kind === 'Support' || card.kind === 'Find' || card.kind === 'Sense' || card.kind === 'Breath' || card.kind === 'BreathStep' || card.kind === 'Beads' ||
+      card.kind === 'Fingers' || card.kind === 'SoundRings' || card.kind === 'Gaze') s.ripples = [];
     if (card.kind !== 'Intro') s.introOp.to(0, springSpec(100, 1));
     if (card.kind !== 'BreathStep') s.breath = null;
     let icon: ObjectKind | null = null;
@@ -133,7 +138,8 @@ class GlassScene implements LensScene {
         s.findStage = card.stage;
         s.findCircleOp.to(card.stage === 'ITEM' ? 0 : 1);
         s.findCupOp.to(card.stage === 'ITEM' ? 1 : 0);
-        s.texts.caption(copyFor(card));
+        // 6.1 on one line; 6.2 / 6.3's text box has a fixed width (two lines).
+        s.texts.caption(copyFor(card), CAPTION_471, card.stage === 'LOOK' ? 0 : FIND_WRAP);
         break;
       }
       case 'Sense':
@@ -142,7 +148,7 @@ class GlassScene implements LensScene {
         s.senseKind = card.sense;
         if (prev !== 'SENSE') s.senseT0 = s.now;
         s.senseOp.to(1);
-        s.texts.caption(copyFor(card));
+        s.texts.caption(copyFor(card), CAPTION_462);
         break;
       case 'Breath':
         // Starts on the inner circle (both dotted circles full) and opens out to the outer one.
@@ -154,7 +160,7 @@ class GlassScene implements LensScene {
         s.guideOp.to(1);
         s.breath = rm || card.durationMs <= 0 ? null
           : {phase: 'EXHALE', start: s.now, dur: card.durationMs, from: 0, to: 1, innerFrom: 1, outerFrom: 1};
-        s.texts.caption(copyFor(card), Roles.BREATH_L, BREATH_CAPTION_CY);
+        s.texts.caption(copyFor(card), CAPTION_467);
         break;
       case 'BreathStep': {
         s.mode = 'BREATH';
@@ -172,25 +178,28 @@ class GlassScene implements LensScene {
           s.ringInnerA = 1;
           s.ringOuterA = 1;
         } else s.breath = {phase: card.phase, start: s.now, dur: card.durationMs, from: s.bloom.value, to, innerFrom: s.ringInnerA, outerFrom: s.ringOuterA};
-        s.texts.caption(copyFor(card), Roles.BREATH_L, BREATH_CAPTION_CY);
+        s.texts.caption(copyFor(card), CAPTION_467);
         break;
       }
-      case 'SoundRings': {
+      case 'SoundRings':
+        // Figma 8.1: the ear in its dotted circle, four glowing dots on the circle.
         s.mode = 'RINGS';
-        const ops = [0.85, 0.6, 0.4];
-        if (prev !== 'RINGS') {
-          // Opening flourish: the dot grows and drains into a ring, then fades (GS:433-434).
-          o.w.to(140); o.h.to(140); o.y.to(RINGS_CY); o.fill.to(0); o.op.to(1);
-          this.color(ACCENT);
-          s.later(260, () => o.op.to(0));
-          s.rings.forEach((r, i) => {
-            r.r.set(60);
-            s.later(120 * i, () => r.op.to(ops[i] ?? 0));
-          });
-        } else s.rings.forEach((r, i) => r.op.to(ops[i] ?? 0));
-        s.texts.grid(copyFor(card));
+        this.hideObj();
+        if (prev !== 'RINGS') s.listenT0 = s.now;
+        s.listenOp.to(1);
+        s.texts.caption(copyFor(card), CAPTION_462);
         break;
-      }
+      case 'Fingers':
+        // Figma 5.0 → 5.3 → 5.1 on the team's timeline (drawFingers); its caption is part of it.
+        s.mode = 'FINGERS';
+        this.hideObj();
+        if (prev !== 'FINGERS') {
+          s.fingersT0 = s.now;
+          s.fingersOp.set(0);
+        }
+        s.fingersOp.to(1, springSpec(25, 1));
+        s.texts.set([]);
+        break;
       case 'Beads': {
         s.mode = 'BEADS';
         this.hideObj();
@@ -241,19 +250,20 @@ class GlassScene implements LensScene {
       case 'Gaze': {
         s.mode = 'GAZE';
         this.hideObj();
+        // Figma 9.1: the light starts in its dotted circle and travels out and back with a tail.
         if (prev !== 'GAZE') {
-          s.gazeX.set(300);
-          s.gazeY.set(250);
+          s.gazeX.set(GAZE_HOME_X);
+          s.gazeY.set(GAZE_HOME_Y);
           s.trail.clear();
         }
-        const [tx, ty] = card.target === 'RIGHT' ? [545, 250] : card.target === 'LEFT' ? [55, 250]
-          : card.target === 'UP' ? [300, 80] : card.target === 'DOWN' ? [300, 385] : [300, 250];
+        const [tx, ty] = card.target === 'RIGHT' ? [545, GAZE_HOME_Y] : card.target === 'LEFT' ? [55, GAZE_HOME_Y]
+          : card.target === 'UP' ? [GAZE_HOME_X, 80] : card.target === 'DOWN' ? [GAZE_HOME_X, 405] // above the caption (text box top 469)
+          : [GAZE_HOME_X, GAZE_HOME_Y];
         s.gazeX.to(tx);
         s.gazeY.to(ty);
         if (card.target === 'GONE') s.gazeOp.to(0, springSpec(3, 1));
         else s.gazeOp.to(1);
-        // The light travels over the whole square, so the copy sits low, under its path.
-        s.texts.grid(copyFor(card), 446, 496);
+        s.texts.caption(copyFor(card), CAPTION_469);
         break;
       }
       case 'Off':
@@ -412,7 +422,8 @@ class GlassScene implements LensScene {
     if (s.supportOp.value > 0.003) drawSupport(ctx, s, s.supportOp.value, rm);
     if (s.findCircleOp.value > 0.003 || s.findCupOp.value > 0.003) drawFind(ctx, s, rm);
     if (s.senseOp.value > 0.003) drawSense(ctx, s, s.senseOp.value, rm);
-    drawListen(ctx, s);
+    if (s.listenOp.value > 0.003) drawListen(ctx, s, s.listenOp.value, rm);
+    if (s.fingersOp.value > 0.003) drawFingers(ctx, s, s.fingersOp.value, rm);
     drawIcons(ctx, s, rm);
     if (s.introOp.value > 0.003) drawIntro(ctx, s, s.introOp.value);
     if (s.beadsOp.value > 0.003) drawBeads(ctx, s, s.beadsOp.value);

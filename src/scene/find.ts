@@ -1,18 +1,23 @@
-// Find three, Figma 6.1 / 6.2 / 6.3: pulsing dotted circle in the item's colour, then the dotted
-// cup (GS:1000-1038, constants GS:1581-1587).
+// Find three, Figma 6.1 / 6.2 / 6.3 (enlarged ×1.5): pulsing dotted circle in the item's colour,
+// then the dotted cup (GS:1087-1125, constants GS:1896-1903).
 import {CubicBezier, lerp} from '../motion';
 import {CUP_BODY, CUP_LID, CUP_RIM} from './paths';
 import {blit, ctx2d, makeSprite, newCanvas, type Sprite} from './sprites';
 import type {State} from './state';
 
-const FIND_CX = 299.5;
-const FIND_CY = 254.5;
-const FIND_R = 99.5;
+const FIND_CX = 299.25;
+const FIND_CY = 254.25;
+const FIND_R = 149.25;
+/** Component 6 (120×175) drawn ×1.5 at (210, 147) as in the enlarged 6.3. */
+const CUP_X = 210;
+const CUP_Y = 147;
+const CUP_S = 1.5;
 const FIND_DIM = 0.3;
 const FIND_LOW_AT = 0.5016;
 const FIND_PULSE_MS = 2000;
 const FIND_EASE = new CubicBezier(0.5, 0, 0.5, 1);
-const RING_STROKE = 2.11;
+/** The enlarged frames' dotted circles: 3.166 px, dots 1.58 / 18.99 (the old ones ×1.5). */
+const BIG_STROKE = 3.166;
 
 let circle: Sprite | null = null;
 let cup: Sprite | null = null;
@@ -21,22 +26,26 @@ let tint: HTMLCanvasElement | null = null;
 let tintKey = '';
 
 function circleSprite(): Sprite {
-  const pad = RING_STROKE + 2;
+  const pad = BIG_STROKE + 2;
   return makeSprite(FIND_CX - FIND_R - pad, FIND_CY - FIND_R - pad, FIND_CX + FIND_R + pad, FIND_CY + FIND_R + pad, (ctx) => {
     ctx.strokeStyle = '#fff';
-    ctx.lineWidth = RING_STROKE;
-    ctx.setLineDash([1.06, 12.66]);
+    ctx.lineWidth = BIG_STROKE;
+    ctx.setLineDash([1.58, 18.99]);
     ctx.beginPath();
     ctx.arc(FIND_CX, FIND_CY, FIND_R, 0, Math.PI * 2);
     ctx.stroke();
   });
 }
 
-/** Component 6 (120×175) at (239.7, 189.5): dashed body stroke, pre-dashed lid and rim fills. */
+/**
+ * Component 6 ×1.5 at (210, 147): dashed body stroke, pre-dashed lid and rim fills; stroke 2 → 3
+ * and dash .5/7 → .75/10.5 scale with it, as in Figma.
+ */
 function cupSprite(): Sprite {
-  const x = 239.7, y = 189.5;
-  return makeSprite(x - 3, y - 3, x + 123, y + 178, (ctx) => {
+  const x = CUP_X, y = CUP_Y, k = CUP_S;
+  return makeSprite(x - 3 * k, y - 3 * k, x + 123 * k, y + 178 * k, (ctx) => {
     ctx.translate(x, y);
+    ctx.scale(k, k);
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
     ctx.setLineDash([0.5, 7]);

@@ -1,12 +1,14 @@
 // "Sit down and feel support": SupportFigure.kt (timeline + contour morph) and
-// GlassScene.drawSupport (GS:889-945).
+// GlassScene.drawSupport (GS:964-1019) at the size of Figma Component 8: the HTML's figure scaled
+// ×1.7775 onto Component 8's boxes, with Component 8's own (wider, flatter) mat and ring ellipses
+// and 40 px two-line captions.
 import {clamp01, cosEase as ease, lerp} from '../motion';
 import {SIT_LINE, SUPPORT_LINE} from './copy';
 import {LOGO_GLOW} from './palette';
 import {blit, blitAt, drawGlowDot, makeSprite, type Sprite} from './sprites';
 import type {State} from './state';
 import shapes from './support_shapes.json';
-import {captionSprite, fontReady} from './text';
+import {CAPTION_467, captionSprite, fontReady} from './text';
 
 // ---------------------------------------------------------------- timeline (SF:94-108)
 export const HOLD_IN = 1.0;
@@ -29,12 +31,23 @@ const HEAD_STAND = [300.93, 237.36, 10.5995] as const;
 const HEAD_SIT = [303.38, 255.85, 10.2729] as const;
 const STAND_BOX = [263.66, 252.84, 67.365, 94.317] as const;
 const SIT_BOX = [258.07, 265.25, 81.868, 73.642] as const;
-const MAT_CX = 300;
-const MAT_CY = 321.73;
-const MAT_RX = 81.5;
-const MAT_RY = 42.7754;
-const RING_RX = 61.2725;
-const RING_RY = 32.1589;
+// Component 8 (GS:1906-1917): the figure's transform, and its own mat / ring ellipses.
+const SUP_S = 1.7775; // 2.2's seated sprite 145.52 × 130.90 vs the HTML's 81.87 × 73.64
+const SUP_TX = -233.72;
+const SUP_TY = -241.48;
+const MAT_CX = 297.59; // Ellipse 2364 / 2369: 335.19 × 130.34 at (130, 283)
+const MAT_CY = 348.17;
+const MAT_RX = 167.59;
+const MAT_RY = 65.17;
+const RING_CX = 300.34; // Ellipse 2365: 266.69 × 99.46 at (167, 299)
+const RING_CY = 348.73;
+const RING_RX = 133.34;
+const RING_RY = 49.73;
+/** A Figma-box [l, t, w, h] of the HTML figure mapped through the Component 8 transform. */
+const scaledBox = (b: readonly number[]): readonly number[] =>
+  [SUP_TX + SUP_S * b[0]!, SUP_TY + SUP_S * b[1]!, SUP_S * b[2]!, SUP_S * b[3]!];
+const STAND_BOX_S = scaledBox(STAND_BOX);
+const SIT_BOX_S = scaledBox(SIT_BOX);
 const FG = 'rgb(251,250,249)';
 const RING_STROKE = 2.11;
 
@@ -211,23 +224,23 @@ export function warmSupport(): void {
   figure ??= new Figure();
   standImg ??= loadImage('/scene/support_body_stand.png');
   sitImg ??= loadImage('/scene/support_body_sit.png');
-  matSprite ??= ellipseSprite(MAT_RX, MAT_RY, true);
-  ringSprite ??= ellipseSprite(RING_RX, RING_RY, false);
+  matSprite ??= ellipseSprite(MAT_CX, MAT_CY, MAT_RX, MAT_RY, true);
+  ringSprite ??= ellipseSprite(RING_CX, RING_CY, RING_RX, RING_RY, false);
 }
 
-function ellipseSprite(rx: number, ry: number, dotted: boolean): Sprite {
+function ellipseSprite(cx: number, cy: number, rx: number, ry: number, dotted: boolean): Sprite {
   const pad = RING_STROKE + 2;
-  return makeSprite(MAT_CX - rx - pad, MAT_CY - ry - pad, MAT_CX + rx + pad, MAT_CY + ry + pad, (ctx) => {
+  return makeSprite(cx - rx - pad, cy - ry - pad, cx + rx + pad, cy + ry + pad, (ctx) => {
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = RING_STROKE;
     if (dotted) ctx.setLineDash([1.06, 12.66]);
     ctx.beginPath();
-    ctx.ellipse(MAT_CX, MAT_CY, rx, ry, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
     ctx.stroke();
   });
 }
 
-/** The PNG downscaled once (high quality) into its Figma box, or null while still loading. */
+/** The PNG downscaled once (high quality) into its (Component 8-scaled) box, or null while still loading. */
 function bodySprite(img: HTMLImageElement | null, box: readonly number[], cached: Sprite | null): Sprite | null {
   if (cached) return cached;
   if (!img || !img.complete || img.naturalWidth === 0) return null;
@@ -242,11 +255,11 @@ function bodySprite(img: HTMLImageElement | null, box: readonly number[], cached
 /** Idle-time bake of everything Support draws; false while the PNGs or the font are not ready. */
 export function prebakeSupport(): boolean {
   warmSupport();
-  standSprite = bodySprite(standImg, STAND_BOX, standSprite);
-  sitSprite = bodySprite(sitImg, SIT_BOX, sitSprite);
+  standSprite = bodySprite(standImg, STAND_BOX_S, standSprite);
+  sitSprite = bodySprite(sitImg, SIT_BOX_S, sitSprite);
   if (!standSprite || !sitSprite || !fontReady()) return false;
-  captionSprite(SIT_LINE, 'Sit');
-  captionSprite(SUPPORT_LINE, 'support');
+  captionSprite(SIT_LINE, 'Sit', CAPTION_467);
+  captionSprite(SUPPORT_LINE, 'Support', CAPTION_467);
   return true;
 }
 
@@ -265,12 +278,15 @@ export function drawSupport(ctx: CanvasRenderingContext2D, s: State, a0: number,
   if (a <= 0.003) return;
   // Body: the Figma sprites at the holds, the traced contours morphing in between.
   if (k.sit <= 0) {
-    standSprite = bodySprite(standImg, STAND_BOX, standSprite);
+    standSprite = bodySprite(standImg, STAND_BOX_S, standSprite);
     if (standSprite) blit(ctx, standSprite, a * k.fig);
   } else if (k.sit >= 1) {
-    sitSprite = bodySprite(sitImg, SIT_BOX, sitSprite);
-    if (sitSprite) blitAt(ctx, sitSprite, 0, k.sink, a * k.fig);
+    sitSprite = bodySprite(sitImg, SIT_BOX_S, sitSprite);
+    if (sitSprite) blitAt(ctx, sitSprite, 0, SUP_S * k.sink, a * k.fig);
   } else if (figure) {
+    ctx.save();
+    ctx.translate(SUP_TX, SUP_TY);
+    ctx.scale(SUP_S, SUP_S);
     ctx.fillStyle = FG;
     ctx.globalAlpha = a > 1 ? 1 : a;
     for (const poly of figure.polys(k.sit)) {
@@ -281,18 +297,20 @@ export function drawSupport(ctx: CanvasRenderingContext2D, s: State, a0: number,
       ctx.fill();
     }
     ctx.globalAlpha = 1;
+    ctx.restore();
   }
-  // The head travels with the body; the two Figma head dots cross-fade along the way.
+  // The head travels with the body; the two Figma head dots cross-fade along the way (placed by
+  // hand rather than under the scale, so their glow keeps Figma's σ).
   const e = ease(k.sit);
-  const hx = lerp(HEAD_STAND[0], HEAD_SIT[0], e);
-  const hy = lerp(HEAD_STAND[1], HEAD_SIT[1], e) + k.sink;
-  drawGlowDot(ctx, hx, hy, HEAD_STAND[2], a * k.fig * (1 - e), LOGO_GLOW);
-  drawGlowDot(ctx, hx, hy, HEAD_SIT[2], a * k.fig * e, LOGO_GLOW);
+  const hx = SUP_TX + SUP_S * lerp(HEAD_STAND[0], HEAD_SIT[0], e);
+  const hy = SUP_TY + SUP_S * (lerp(HEAD_STAND[1], HEAD_SIT[1], e) + k.sink);
+  drawGlowDot(ctx, hx, hy, SUP_S * HEAD_STAND[2], a * k.fig * (1 - e), LOGO_GLOW);
+  drawGlowDot(ctx, hx, hy, SUP_S * HEAD_SIT[2], a * k.fig * e, LOGO_GLOW);
   // Mat (dotted) and the support ring (only its opacity changes).
   if (matSprite) blit(ctx, matSprite, a);
   if (ringSprite && k.ring > 0.003) blit(ctx, ringSprite, a * k.ring);
   // The two captions cross-fade on the timeline.
-  if (a * k.txtSit > 0.003) blit(ctx, captionSprite(SIT_LINE, 'Sit'), a * k.txtSit);
-  if (a * k.txtSupport > 0.003) blit(ctx, captionSprite(SUPPORT_LINE, 'support'), a * k.txtSupport);
+  if (a * k.txtSit > 0.003) blit(ctx, captionSprite(SIT_LINE, 'Sit', CAPTION_467), a * k.txtSit);
+  if (a * k.txtSupport > 0.003) blit(ctx, captionSprite(SUPPORT_LINE, 'Support', CAPTION_467), a * k.txtSupport);
 }
 

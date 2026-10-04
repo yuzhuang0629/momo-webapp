@@ -212,7 +212,16 @@ export function drawIcons(ctx: CanvasRenderingContext2D, s: State, reduceMotion:
     const a = iconAlpha(s, ic);
     if (a <= 0.003) continue;
     if (ic.kind === 'Fingers') drawFingers(ctx, s, ic.s.value, a, reduceMotion);
-    else if (ic.kind === 'Stem') drawStem(ctx, s.now, 300, 352, s.stem.value, a);
+    else if (ic.kind === 'Stem') {
+      // #11: enlarged with the Figma frames, ×1.4 about its base (GS:1190). Pure vectors (no glow),
+      // so drawing under the scale stays crisp.
+      ctx.save();
+      ctx.translate(300, 352);
+      ctx.scale(1.4, 1.4);
+      ctx.translate(-300, -352);
+      drawStem(ctx, s.now, 300, 352, s.stem.value, a);
+      ctx.restore();
+    }
     // Other ObjectKinds are legacy v1 drawings that the v2.1 engine never emits.
   }
 }

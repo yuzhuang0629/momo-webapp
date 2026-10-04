@@ -45,6 +45,12 @@ export type GlassCard =
       countHold: boolean;
       topUp?: boolean;
     }
+  /**
+   * Rub your fingers (USER_FLOW #6, Figma 5.0 → 5.3 → 5.1): a hand rubs its thumb over the
+   * bracelet, one bead per rub; after two rubs the bracelet fades and the two-dots page with its
+   * caption fades in. durationMs (already scaled) is how long the step lasts.
+   */
+  | {kind: 'Fingers'; durationMs: number}
   | {kind: 'Swatch'; colorHex: string; label: string; sub: string; found: number}
   | {kind: 'SoundRings'; prompt: string | null; title?: string; meta?: string | null}
   | {kind: 'Fireflies'; target: number; caught: number; reached?: boolean}

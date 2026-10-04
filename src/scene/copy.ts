@@ -11,7 +11,9 @@ export interface Copy {
 
 export const PINCH_HINT = 'Pinch to move on';
 export const SIT_LINE = 'Slowly Sit Down';
-export const SUPPORT_LINE = 'Feel the support beneath you.';
+/** Figma Component 8 sets it on two lines ("\n"), the key word capitalised. */
+export const SUPPORT_LINE = 'Feel the Support\nbeneath you.';
+export const FINGERS_LINE = 'Focus on the feeling of two\nfingers rubbing together.';
 
 function copy(title: string | null, sub: string | null, meta: string | null = null, footer = true, underline: string | null = null): Copy {
   return {title, sub, meta, footer, underline};
@@ -24,7 +26,12 @@ export function copyFor(card: GlassCard): Copy | null {
     case 'PhaseIntro':
       return copy(card.word, null, `Part ${card.index + 1} of 3`);
     case 'Support':
-      return copy(SUPPORT_LINE, null, null, false, 'support');
+      // Figma Component 8 (2.1–2.5): drawSupport cross-fades its two captions on the timeline;
+      // this is the line the screen settles on.
+      return copy(SUPPORT_LINE, null, null, false, 'Support');
+    case 'Fingers':
+      // Figma 5.1: drawFingers fades this in once the bracelet has gone.
+      return copy(FINGERS_LINE, null, null, false, 'rubbing');
     case 'Sense':
       return card.sense === 'SCENT'
         ? copy('Notice Its Scent.', null, null, false, 'Scent')
@@ -51,11 +58,13 @@ export function copyFor(card: GlassCard): Copy | null {
     case 'Beads':
       return copy(null, null, null, false);
     case 'Gaze':
-      return copy(card.instruction, null, card.meta ?? null, card.target !== 'GONE');
+      // Figma 9.1: one line for the whole route; the light shows the way, the voice names it.
+      return copy('Slowly Look Around.', null, null, false, 'Look Around');
     case 'Intro':
       return copy('Take a moment for yourself.', card.merging ? null : 'Pinch to start', null, false);
     case 'SoundRings':
-      return copy(card.title ?? 'Listen', card.prompt, card.meta ?? 'Reconnect');
+      // Figma 8.1: the ear in its dotted circle; one line.
+      return copy('Notice Sound Around You.', null, null, false, 'Sound');
     case 'Swatch':
       return copy(card.label, null, card.sub);
     case 'Fireflies':

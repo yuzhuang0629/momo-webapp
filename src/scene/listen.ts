@@ -1,11 +1,70 @@
-// Listen: three breathing dot rings fed by simulated ambient energy (GS:683-697, GS:734-739),
-// plus the shared dot-ring primitive and the pinch ripple (GS:1490-1521).
-import {MotionTokens} from '../motion';
-import {CREAM, rgba} from './palette';
+// Listen, Figma 8.1 (drawListen, GS:1492-1507): the ear (white, over its grey inner shape with a
+// dotted outline) inside a dotted circle with four glowing dots on it. The frame has no motion; the
+// dots drift slowly round the circle and swell a little with the room's (simulated) sound energy.
+// Also the shared dot-ring primitive and the pinch ripple (GS:1490-1521 of the baseline).
+import {CREAM, DOT_GLOW_17, rgba} from './palette';
+import {EAR_PATH, EAR_V4_PATH} from './paths';
+import {blit, drawGlowDot, glowDotSprite, makeSprite, type Sprite} from './sprites';
 import type {State} from './state';
 
-export const RINGS_CY = 240;
 const CREAM_FILL = rgba(CREAM, 1);
+const LISTEN_CX = 299.25;
+const LISTEN_CY = 248.55;
+const LISTEN_R = 167.25;
+const BIG_STROKE = 3.166;
+const EAR_V4_X = 240.74; // ear group (233, 153) + Vector 4's offset (7.74, 29.7)
+const EAR_V4_Y = 182.7;
+/** The four dots on the circle (x, y, r). */
+const DOTS: ReadonlyArray<readonly [number, number, number]> = [
+  [146.29, 175.29, 14.29], [185.75, 372.75, 9.75], [449.75, 324.75, 9.75], [392.75, 108.75, 6.75],
+];
+/** The dots drift once round the circle a minute (no Figma motion; slow on purpose). */
+const ORBIT_MS = 60_000;
+/** Dot radii are quantised so each glow is baked once (≤ 0.125 px off). */
+const DOT_R_STEP = 0.25;
+
+let circle: Sprite | null = null;
+let earV4: Sprite | null = null;
+let ear: Sprite | null = null;
+
+export function warmListen(): void {
+  circle ??= makeSprite(LISTEN_CX - LISTEN_R - 4, LISTEN_CY - LISTEN_R - 4, LISTEN_CX + LISTEN_R + 4, LISTEN_CY + LISTEN_R + 4, (ctx) => {
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = BIG_STROKE;
+    ctx.setLineDash([1.58, 18.99]);
+    ctx.beginPath();
+    ctx.arc(LISTEN_CX, LISTEN_CY, LISTEN_R, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+  // Vector 4 (≈ 96 × 131, group-local): grey #D9D9D9 fill, white 3 px dotted outline (.75 / 13.5).
+  earV4 ??= makeSprite(EAR_V4_X - 3, EAR_V4_Y - 3, EAR_V4_X + 100, EAR_V4_Y + 134, (ctx) => {
+    ctx.translate(EAR_V4_X, EAR_V4_Y);
+    const p = new Path2D(EAR_V4_PATH);
+    ctx.fillStyle = 'rgb(217,217,217)';
+    ctx.fill(p);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([0.75, 13.5]);
+    ctx.stroke(p);
+  });
+  ear ??= makeSprite(233, 169, 352, 339, (ctx) => {
+    ctx.fillStyle = '#fff';
+    ctx.fill(new Path2D(EAR_PATH));
+  });
+}
+
+let prebakedDots = 0;
+const DOT_SIZES: number[] = [];
+for (const [, , r] of DOTS) {
+  for (let q = Math.round(r / DOT_R_STEP); q <= Math.round((r * 1.3) / DOT_R_STEP); q++) DOT_SIZES.push(q * DOT_R_STEP);
+}
+
+/** Bakes the dot glows the sound swell passes through, a few per idle frame. */
+export function prebakeListen(): boolean {
+  warmListen();
+  for (let k = 0; k < 6 && prebakedDots < DOT_SIZES.length; k++) glowDotSprite(DOT_SIZES[prebakedDots++]!, DOT_GLOW_17);
+  return prebakedDots >= DOT_SIZES.length;
+}
 
 /** dotRing (GS:1514-1521) with every dot in one path and one fill (lit = 0 in the v2.1 flow). */
 export function dotRing(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, n: number, rad: number, alpha: number, rot = 0): void {
@@ -35,7 +94,7 @@ function noise(t: number): number {
   return a + (b - a) * u;
 }
 
-/** Simulated ambient sound energy, smoothed ≥ 300 ms (updateEnergy, GS:683-691). */
+/** Simulated ambient sound energy, smoothed ≥ 300 ms (updateEnergy, GS:751-759). */
 export function stepListen(s: State, dt: number): void {
   const t = s.now / 1000;
   const k = 1 - Math.exp(-dt / 0.35);
@@ -45,17 +104,23 @@ export function stepListen(s: State, dt: number): void {
   s.energy[0] = s.energy[0]! + (Math.min(1, Math.max(0, raw0)) - s.energy[0]!) * k;
   s.energy[1] = s.energy[1]! + (Math.min(1, Math.max(0, raw1)) - s.energy[1]!) * k;
   s.energy[2] = s.energy[2]! + (Math.min(1, Math.max(0, raw2)) - s.energy[2]!) * k;
-  s.rings.forEach((r, i) => r.r.to(r.base + s.energy[i]! * 18, MotionTokens.Calm));
 }
 
-export function drawListen(ctx: CanvasRenderingContext2D, s: State): void {
-  s.rings.forEach((r, i) => {
-    const op = r.op.value;
-    if (op <= 0.003) return;
-    const rad = r.r.value;
-    const n = Math.max(12, Math.round((2 * Math.PI * rad) / 16));
-    dotRing(ctx, 300, RINGS_CY, rad, n, 1.8, op, ((i % 2 === 1 ? -1 : 1) * s.now) / 20000);
-  });
+export function drawListen(ctx: CanvasRenderingContext2D, s: State, a: number, reduceMotion: boolean): void {
+  warmListen();
+  if (circle) blit(ctx, circle, a);
+  if (earV4) blit(ctx, earV4, a);
+  if (ear) blit(ctx, ear, a);
+  const turn = reduceMotion ? 0 : ((s.now - s.listenT0) / ORBIT_MS) * 2 * Math.PI;
+  for (let i = 0; i < DOTS.length; i++) {
+    const d = DOTS[i]!;
+    const dx = d[0] - LISTEN_CX;
+    const dy = d[1] - LISTEN_CY;
+    const ang = Math.atan2(dy, dx) + turn;
+    const rr = Math.hypot(dx, dy);
+    const r = d[2] * (reduceMotion ? 1 : 1 + 0.3 * s.energy[i % 3]!);
+    drawGlowDot(ctx, LISTEN_CX + rr * Math.cos(ang), LISTEN_CY + rr * Math.sin(ang), Math.round(r / DOT_R_STEP) * DOT_R_STEP, a, DOT_GLOW_17);
+  }
 }
 
 /** Pinch ripples (drawRipples, GS:1490-1501). */

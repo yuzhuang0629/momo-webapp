@@ -1,17 +1,18 @@
-// Breathing ring, Figma 60-696 enlarged (GS:865-887, constants GS:1565-1577) and its per-phase
+// Breathing ring, enlarged Figma 3.2 / 3.3 (60-801 / 60-814; GS:937-950, constants GS:1885-1895;
+// 3.1 sits 31 px higher, all breathing screens use 3.2 / 3.3 so the ring never jumps) and its per-phase
 // motion from 3.0动画.html (GS:626-644).
 import {CubicBezier, clamp01, lerp} from '../motion';
 import {RING_GLOW, WHITE, sigmaFor} from './palette';
 import {blit, ctx2d, makeSprite, newCanvas, shadowOnly, type Sprite} from './sprites';
 import type {State} from './state';
 
-const CX = 300.45;
-const CY = 241.4;
-const RING_IN = 108.37;
-const RING_OUT = 156.38;
-const DOT_IN = 108.48;
-const DOT_OUT = 156.48;
-const STROKE = 4.052;
+const CX = 299.5;
+const CY = 272.5;
+const RING_IN = 106.31; // solid ring on the inner circle (3.2 Ellipse 2365)
+const RING_OUT = 152.5; // … and on the outer circle (3.3)
+const DOT_IN = 106.1; // dotted circles (Ellipse 2369 / 2364)
+const DOT_OUT = 153.05;
+const STROKE = 3.96;
 const DIM = 0.38;
 export const TOP_UP_FROM = 0.25;
 
@@ -50,14 +51,14 @@ function dottedCircle(r: number): Sprite {
   return makeSprite(CX - r - pad, CY - r - pad, CX + r + pad, CY + r + pad, (ctx) => {
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = STROKE;
-    ctx.setLineDash([2.03, 24.31]);
+    ctx.setLineDash([1.985, 23.78]); // 3.2 / 3.3: the same dots, ×1.88
     ctx.beginPath();
     ctx.arc(CX, CY, r, 0, Math.PI * 2);
     ctx.stroke();
   });
 }
 
-// The glow of the travelling ring (σ 11.14) is pre-blurred at a few radii, at half resolution
+// The glow of the travelling ring (σ 10.9) is pre-blurred at a few radii, at half resolution
 // (it is a soft halo), and scaled to the exact radius; the crisp 4 px stroke is drawn per frame.
 const GLOW_STEP = 4;
 const GLOW_RES = 0.5;

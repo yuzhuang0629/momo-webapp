@@ -8,18 +8,23 @@ import {CREAM, TEXT_GLOW_6_4, TEXT_GLOW_9_3, WHITE, rgba, type Rgb} from './pale
 import {blit, clearShadow, ctx2d, glowPad, makeSprite, newCanvas, setShadow, type Sprite} from './sprites';
 
 export const FONT_FAMILY = '"Elms Sans"';
-const TITLE_PX = 37.4;
-const SUB_PX = 20;
+// Screens without a Figma frame (get comfortable, the end, quick exit) use one text grid — meta
+// line, title, subtitle, footer — enlarged with the Figma frames (title 40 px; GS:1858-1863).
+const TITLE_PX = 40;
+const SUB_PX = 28;
 
-export const META_Y = 408;
-export const TITLE_Y = 452;
+export const META_Y = 396;
+export const TITLE_Y = 446;
 export const SUB_Y = 498;
 export const FOOT_Y = 556;
-/** Figma one-liner baseline (find / sense / support captions), GS:1578. */
-export const BREATH_TEXT_Y = 424;
-/** 40 px breathing caption centre, GS:1574. */
-export const BREATH_CAPTION_CY = 489.6;
-/** Widest a Figma one-liner may be before it is scaled down, GS:1579. */
+/** Enlarged Figma captions: line height, and first-line centre = the frame's text box top + 22.6 (GS:1868-1874). */
+export const FIGMA_LH = 45.2;
+export const CAPTION_462 = 484.6; // sense 7.1, listen 8.1
+export const CAPTION_467 = 489.6; // breathing 3.x, support (Component 8)
+export const CAPTION_469 = 491.6; // expand view 9.1
+export const CAPTION_471 = 493.6; // find 6.x
+export const FIND_WRAP = 406; // 6.2 / 6.3 text box width (two lines)
+/** Widest a Figma line may be before it is scaled down, GS:1876. */
 const FIGMA_LINE_MAX = 560;
 const WRAP_MAX = 500;
 
@@ -29,7 +34,7 @@ export interface Role {
   readonly weight: number;
   readonly alpha: number;
   readonly track: number;
-  /** Extra lines go down from y (else the block is centred on y). */
+  /** Extra lines go down from y (else the block is centred on y). BREATH_L is always top-anchored. */
   readonly top: boolean;
   /** y is the baseline instead of the line's centre. */
   readonly baseline: boolean;
@@ -44,7 +49,9 @@ function role(name: RoleName, size: number, weight: number, alpha: number, track
   return {name, size, weight, alpha, track, top, baseline, glow, glowA};
 }
 
-// GS:178-188. PHASE's letter-spacing animation (0.04 → −0.011, legacy PhaseIntro) is baked at its end value.
+// GS:191-205. BREATH_L = the enlarged Figma captions (all frames since 2026-10-03): 40 px, line
+// height 45.2, y = the first line's centre, "\n" breaks, optional fixed-width wrap. PHASE's
+// letter-spacing animation (0.04 → −0.011, legacy PhaseIntro) is baked at its end value.
 export const Roles: Readonly<Record<RoleName, Role>> = {
   TITLE: role('TITLE', TITLE_PX, 300, 0.95, -0.011, false),
   SUB: role('SUB', SUB_PX, 400, 0.7, 0, true),
@@ -109,15 +116,58 @@ export function wrap(s: string, r: Role): string[] {
   return best;
 }
 
-/** Draws one centred line at baseline (cx, y) with its underlined word; fill/shadow already set. */
-function drawLine(ctx: CanvasRenderingContext2D, ln: string, underline: string | null, cx: number, y: number, size: number): void {
+/**
+ * A Figma caption's lines (figmaLines, GS:229-243): its own "\n" breaks, then greedy word wrap at
+ * [wrapW] (0 = none), as Figma wraps a fixed-width text box.
+ */
+export function figmaLines(s: string, wrapW = 0): string[] {
+  const r = Roles.BREATH_L;
+  const m = (t: string): number => measure(t, r.weight, r.size, r.track);
+  const out: string[] = [];
+  for (const seg of s.split('\n')) {
+    if (wrapW <= 0 || m(seg) <= wrapW) {
+      out.push(seg);
+      continue;
+    }
+    let cur = '';
+    for (const w of seg.split(' ')) {
+      const next = cur.length === 0 ? w : `${cur} ${w}`;
+      if (cur.length > 0 && m(next) > wrapW) {
+        out.push(cur);
+        cur = w;
+      } else cur = next;
+    }
+    if (cur.length > 0) out.push(cur);
+  }
+  return out;
+}
+
+/**
+ * The part [start, end) of line [i] that the underlined phrase [u] covers (a phrase may run over a
+ * line break), or null (underlineSpan, GS:245-256).
+ */
+export function underlineSpan(lines: readonly string[], u: string | null, i: number): [number, number] | null {
+  if (u == null) return null;
+  const at = lines.join(' ').indexOf(u);
+  if (at < 0) return null;
+  const ln = lines[i] ?? '';
+  let off = 0;
+  for (let k = 0; k < i; k++) off += (lines[k] ?? '').length + 1;
+  let s = Math.max(at, off) - off;
+  let e = Math.min(at + u.length, off + ln.length) - off;
+  while (s < e && ln[s] === ' ') s++;
+  while (e > s && ln[e - 1] === ' ') e--;
+  return e > s ? [s, e] : null;
+}
+
+/** Draws one centred line at baseline (cx, y) with its underlined span; fill/shadow already set. */
+function drawLine(ctx: CanvasRenderingContext2D, ln: string, span: [number, number] | null, cx: number, y: number, size: number): void {
   ctx.textAlign = 'center';
   ctx.fillText(ln, cx, y);
-  const at = underline == null ? -1 : ln.indexOf(underline);
-  if (underline == null || at < 0) return;
+  if (span == null) return;
   ctx.textAlign = 'left';
-  const x0 = cx - ctx.measureText(ln).width / 2 + ctx.measureText(ln.slice(0, at)).width;
-  const w = ctx.measureText(underline).width;
+  const x0 = cx - ctx.measureText(ln).width / 2 + ctx.measureText(ln.slice(0, span[0])).width;
+  const w = ctx.measureText(ln.slice(span[0], span[1])).width;
   // Elms Sans post table: underlinePosition −100, thickness 50 (per 1000 em), GS:993-996.
   ctx.fillRect(x0, y + 0.1 * size, w, Math.max(1, 0.05 * size));
 }
@@ -127,14 +177,16 @@ function drawLine(ctx: CanvasRenderingContext2D, ln: string, underline: string |
  * (alpha 1 = fully faded in), including the Figma glow and the >560 px fit of one-liners.
  */
 export function bakeText(lines: readonly string[], r: Role, x: number, y: number, underline: string | null): Sprite {
-  const lh = r.size * 1.15;
+  const figma = r.name === 'BREATH_L';
+  const lh = figma ? FIGMA_LH : r.size * 1.15;
+  const top = r.top || figma; // Figma text boxes grow downwards from their first line
   // Centred roles: baseline = centre − (ascent + descent)/2 = cy + 0.35·size (hhea 1000 / −300).
   const base = r.baseline ? 0 : 0.35 * r.size;
   const ys: number[] = [];
   const ks: number[] = [];
   let maxW = 0;
   for (let i = 0; i < lines.length; i++) {
-    ys.push(y + (r.top || r.baseline ? i * lh : (i - (lines.length - 1) / 2) * lh) + base);
+    ys.push(y + (top || r.baseline ? i * lh : (i - (lines.length - 1) / 2) * lh) + base);
     const w = measure(lines[i] ?? '', r.weight, r.size, r.track);
     const k = isOneLine(r) && w > FIGMA_LINE_MAX ? FIGMA_LINE_MAX / w : 1;
     ks.push(k);
@@ -157,7 +209,7 @@ export function bakeText(lines: readonly string[], r: Role, x: number, y: number
         ctx.scale(k, k);
         ctx.translate(-x, -ly);
       }
-      drawLine(ctx, lines[i] ?? '', underline, x, ly, r.size);
+      drawLine(ctx, lines[i] ?? '', underlineSpan(lines, underline, i), x, ly, r.size);
       ctx.restore();
     }
     clearShadow(ctx);
@@ -235,9 +287,12 @@ export function textSprite(lines: readonly string[], r: Role, x: number, y: numb
   return s;
 }
 
-/** A one-line BREATH caption at baseline 424 (support captions are drawn outside the layer system). */
-export function captionSprite(str: string, underline: string | null): Sprite {
-  return textSprite([str], Roles.BREATH, 300, BREATH_TEXT_Y, underline);
+/**
+ * One Figma caption drawn on a timeline (support, fingers; drawFigmaLine, GS:1050-1071): 40 px,
+ * first line centred on [y], "\n" breaks, the key word underlined.
+ */
+export function captionSprite(str: string, underline: string | null, y: number): Sprite {
+  return textSprite(figmaLines(str), Roles.BREATH_L, 300, y, underline);
 }
 
 /** Bakes lines that are certain to appear (call from idle frames; no-op until the font is ready). */
@@ -259,6 +314,8 @@ export interface TextItem {
   y: number;
   x?: number;
   underline?: string | null;
+  /** BREATH_L only: fixed text-box width to wrap at (0 = only "\n" breaks). */
+  wrap?: number;
 }
 
 class TextLayer {
@@ -275,8 +332,9 @@ class TextLayer {
     readonly x: number,
     readonly y: number,
     readonly underline: string | null,
+    wrapW = 0,
   ) {
-    this.lines = isOneLine(role) ? [str] : wrap(str, role);
+    this.lines = role.name === 'BREATH_L' ? figmaLines(str, wrapW) : isOneLine(role) ? [str] : wrap(str, role);
   }
 
   bake(): Sprite {
@@ -317,7 +375,7 @@ export class TextSystem {
     const hasTitle = items.some((l) => isTitleRole(l.role) && !keptHas(l));
     for (const l of items) {
       if (keptHas(l)) continue;
-      const t = new TextLayer(l.str, l.role, l.x ?? 300, l.y, l.underline ?? null);
+      const t = new TextLayer(l.str, l.role, l.x ?? 300, l.y, l.underline ?? null, l.wrap ?? 0);
       const stagger = (l.role === Roles.SUB || l.role === Roles.FOOT) && hasTitle ? 500 : 0;
       t.start = now + (dir !== 0 ? 0 : fading ? 220 : 0) + stagger;
       this.layers.push(t);
@@ -344,9 +402,13 @@ export class TextSystem {
     this.set(items);
   }
 
-  /** One Figma one-liner with its underlined key word (breathCaption, GS:243-246). */
-  caption(copy: Copy | null, r: Role = Roles.BREATH, y = BREATH_TEXT_Y): void {
-    this.set(copy?.title != null ? [{str: copy.title, role: r, y, underline: copy.underline}] : []);
+  /**
+   * Figma caption screens (breathCaption, GS:293-296): the frame's words in 40 px, key word
+   * underlined, first line centred on [y] (each frame's own text box), wrapped at [wrapW] where the
+   * box has a fixed width.
+   */
+  caption(copy: Copy | null, y: number, wrapW = 0): void {
+    this.set(copy?.title != null ? [{str: copy.title, role: Roles.BREATH_L, y, underline: copy.underline, wrap: wrapW}] : []);
   }
 
   /** After the Support card: words not yet started wait ≥ 220 ms (GS:551). */

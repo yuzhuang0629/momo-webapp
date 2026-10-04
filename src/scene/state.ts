@@ -6,7 +6,7 @@ import {ACCENT} from './palette';
 import {TextSystem, type Clock} from './text';
 
 export type Mode =
-  | 'BLANK' | 'TEXT' | 'INTRO' | 'SUPPORT' | 'FIND' | 'SENSE' | 'PHASE' | 'BREATH' | 'SWATCH'
+  | 'BLANK' | 'TEXT' | 'INTRO' | 'SUPPORT' | 'FIND' | 'SENSE' | 'FINGERS' | 'PHASE' | 'BREATH' | 'SWATCH'
   | 'RINGS' | 'STEPS' | 'PHRASE' | 'CHOICE' | 'STAR' | 'BEADS' | 'GAZE' | 'OFF';
 
 export interface BreathSt {
@@ -98,9 +98,14 @@ export class State {
   readonly bloom = this.sp(0);
   breath: BreathSt | null = null;
 
-  // Listen rings (GS:68-69)
-  readonly rings = [50, 90, 130].map((base) => ({base, r: this.sp(60), op: this.sp(0)}));
+  // Listen (Figma 8.1): simulated room energy swells its dots (GS:68-69, GS:117-118).
   readonly energy = [0.4, 0.4, 0.4];
+  readonly listenOp = this.sp(0);
+  listenT0 = 0;
+
+  // Rub your fingers (Figma 5.x), its own timeline from fingersT0 (GS:119-120).
+  readonly fingersOp = this.sp(0);
+  fingersT0 = 0;
 
   readonly stem = this.sp(0, MotionTokens.Stem);
 

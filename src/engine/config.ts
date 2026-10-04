@@ -101,7 +101,8 @@ export const DEFAULT_TIMINGS: Timings = {
   beadIdleBeforeAuto: 6_000,
   beadAutoEvery: 2_500,
   beadGuideTurn: 1_400,
-  fingers: 12_000,
+  /** #6: two rubs (4.8 s), the bracelet fades (2 s), the caption page fades in (1.6 s), then ~5.6 s to read it. */
+  fingers: 14_000,
   findLook: 2_500,
   findNotice: 3_500,
   findItem: 4_000,

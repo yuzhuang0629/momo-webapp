@@ -13,10 +13,14 @@ type Ev = {at: number; card?: GlassCard; ripple?: true};
 
 const RC = (k: number): string => `Reconnect · ${k} of 6`;
 
+/** #6 grew from 12 s to 14 s (SessionConfig 20:15): everything after it starts this much later. */
+const FINGERS_GROWTH = 2000;
+const shifted = (t: number): number => (t >= 90000 ? t + FINGERS_GROWTH : t);
+
 /** The nominal 1× session (01-flow-and-copy §3.1), no pinches, preset 3. */
 function flow(opts: {ripple: boolean; scent: boolean}): Ev[] {
   const ev: Ev[] = [];
-  const at = (t: number, card: GlassCard): void => void ev.push({at: t, card});
+  const at = (t: number, card: GlassCard): void => void ev.push({at: shifted(t), card});
   at(0, {kind: 'Intro', merging: false, durationMs: 4800});
   at(10000, {kind: 'Intro', merging: true, durationMs: 1400, fadeOutMs: 1000});
   at(13000, {kind: 'Support', sitFirst: true, durationMs: 23800});
@@ -33,7 +37,7 @@ function flow(opts: {ripple: boolean; scent: boolean}): Ev[] {
   at(58600, {kind: 'Beads', turned: 0, total: 8, dir: -1, guide: false, meta: meta1});
   for (let k = 1; k <= 5; k++) at(66100 + (k - 1) * 2500, {kind: 'Beads', turned: k, total: 8, dir: -1, meta: meta1});
   if (opts.ripple) ev.push({at: 78600, ripple: true});
-  at(78600, {kind: 'Text', title: 'Rub your fingers', subtitle: 'Thumb against fingertips', obj: 'Fingers', over: RC(2)});
+  at(78600, {kind: 'Fingers', durationMs: 14000});
   const items: Array<[string, string]> = [['Straight Item', '#FFFFFF'], ['Dark Item', '#8C8C8C'], ['Fabric Item', '#FFFFFF']];
   t = 90600;
   items.forEach(([label, colorHex], index) => {
@@ -55,7 +59,7 @@ function flow(opts: {ripple: boolean; scent: boolean}): Ev[] {
   g(164350, 'DOWN', 'Look at your hands');
   g(168850, 'GONE', 'Look around slowly');
   at(170650, {kind: 'Text', title: 'Get comfortable', subtitle: 'Hair, clothes, posture', obj: 'Stem', over: 'Re-enter'});
-  if (opts.ripple) ev.push({at: 182650, ripple: true});
+  if (opts.ripple) ev.push({at: shifted(182650), ripple: true});
   at(182650, {kind: 'Text', title: "Whenever you're ready", subtitle: 'Take your next step', pose: 'Seed'});
   at(188650, {kind: 'Off'});
   at(190450, {kind: 'Blank'});
@@ -64,24 +68,24 @@ function flow(opts: {ripple: boolean; scent: boolean}): Ev[] {
 
 /** QuickExit from Listen: "You're ready." with the Exhale dot, Off, Blank. */
 function quick(): Ev[] {
-  const ev = flow({ripple: false, scent: false}).filter((e) => e.at < 140600);
-  ev.push({at: 140600, card: {kind: 'Text', title: "You're ready.", subtitle: null, pose: 'Exhale'}});
-  ev.push({at: 145400, card: {kind: 'Off'}});
-  ev.push({at: 147200, card: {kind: 'Blank'}});
+  const ev = flow({ripple: false, scent: false}).filter((e) => e.at < shifted(140600));
+  ev.push({at: shifted(140600), card: {kind: 'Text', title: "You're ready.", subtitle: null, pose: 'Exhale'}});
+  ev.push({at: shifted(145400), card: {kind: 'Off'}});
+  ev.push({at: shifted(147200), card: {kind: 'Blank'}});
   return ev;
 }
 
 /** Card start offsets in the flow (lab names). */
-const OFFSETS: Record<string, number> = {
+const OFFSETS: Record<string, number> = Object.fromEntries(Object.entries({
   intro: 0, introExit: 10000, support: 13000, breath: 36800, inhale: 39800, exhale: 42800,
   beads: 55800, beadsTurn: 66100, fingers: 78600, find: 90600, find2: 100600, find3: 110600,
   sense: 120600, listen: 130600, gaze: 145600, gazeLeft: 151850, gazeUp: 158100, gazeDown: 164350,
   gazeGone: 168850, comfortable: 170650, end: 182650, off: 188650, blank: 190450, quick: 140600,
-};
+}).map(([k, v]) => [k, shifted(v)]));
 
 const DURATIONS: Record<string, number> = {
   intro: 10000, introExit: 3000, support: 23800, breath: 3000, inhale: 3000, exhale: 5000,
-  beads: 22800, beadsTurn: 12500, fingers: 12000, find: 10000, find2: 10000, find3: 10000,
+  beads: 22800, beadsTurn: 12500, fingers: 14000, find: 10000, find2: 10000, find3: 10000,
   sense: 10000, listen: 15000, gaze: 25050, gazeLeft: 6250, gazeUp: 6250, gazeDown: 4500,
   gazeGone: 1800, comfortable: 12000, end: 6000, off: 1800, blank: 2000, quick: 6600,
 };
@@ -210,7 +214,7 @@ function perfFlow(o: LabOpts & {soft?: boolean; spikeMs?: number} = {}): {frames
   const r = new Runner(eventsFor('flow', o), !!o.rm);
   const times: number[] = [];
   const spikes: Array<[number, number]> = [];
-  while (r.now < 192000) {
+  while (r.now < shifted(192000)) {
     const t0 = performance.now();
     r.now += FRAME_MS;
     r.applyDue();

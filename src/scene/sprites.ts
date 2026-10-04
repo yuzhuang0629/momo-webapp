@@ -80,17 +80,17 @@ export function glowPad(androidRadius: number): number {
 const dotCache = new Map<string, Sprite>();
 
 /**
- * drawGlowDot (GS:962-970): opaque white disc with a white shadow @ .71, faded as a group. The
- * sprite is centred on the scene origin; blit it with blitAt(…, cx, cy, alpha).
+ * drawGlowDot (GS:1036-1044): opaque disc of colour [rgb] (default white) with a white shadow @ .71,
+ * faded as a group. The sprite is centred on the scene origin; blit it with blitAt(…, cx, cy, alpha).
  */
-export function glowDotSprite(r: number, glow: number): Sprite {
-  const key = `${r}|${glow}`;
+export function glowDotSprite(r: number, glow: number, rgb: Rgb = WHITE): Sprite {
+  const key = `${r}|${glow}|${rgb[0]},${rgb[1]},${rgb[2]}`;
   let s = dotCache.get(key);
   if (!s) {
     const pad = r + glowPad(glow);
     s = makeSprite(-pad, -pad, pad, pad, (ctx) => {
       setShadow(ctx, glow, WHITE, 0.71);
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = rgba(rgb, 1);
       ctx.beginPath();
       ctx.arc(0, 0, r, 0, Math.PI * 2);
       ctx.fill();
@@ -104,9 +104,9 @@ export function glowDotSprite(r: number, glow: number): Sprite {
  * Glow dot at a fractional centre. The sprite is baked around the origin, so the blit lands on
  * a fractional offset; drawing at the exact position keeps sub-pixel motion smooth.
  */
-export function drawGlowDot(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, alpha: number, glow: number): void {
+export function drawGlowDot(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, alpha: number, glow: number, rgb: Rgb = WHITE): void {
   if (alpha <= 0.003) return;
-  blitAt(ctx, glowDotSprite(r, glow), cx, cy, alpha);
+  blitAt(ctx, glowDotSprite(r, glow, rgb), cx, cy, alpha);
 }
 
 /**

@@ -46,11 +46,12 @@ export const LENS = {
   // #3 support captions (SupportFigure timeline).
   SIT_LINE: 'Slowly Sit Down',
   SIT_UNDERLINE: 'Sit',
-  SUPPORT_LINE: 'Feel the support beneath you.',
-  SUPPORT_UNDERLINE: 'support',
-  // #6
-  FINGERS_TITLE: 'Rub your fingers',
-  FINGERS_SUB: 'Thumb against fingertips',
+  // Figma Component 8 sets it on two lines, the key word capitalised (LensContent.kt:29-31).
+  SUPPORT_LINE: 'Feel the Support\nbeneath you.',
+  SUPPORT_UNDERLINE: 'Support',
+  // #6, Figma 5.1
+  FINGERS_LINE: 'Focus on the feeling of two\nfingers rubbing together.',
+  FINGERS_UNDERLINE: 'rubbing',
   // #9
   LISTEN_TITLE: 'Listen',
   LISTEN_PROMPT: 'One sound around you',
@@ -110,6 +111,9 @@ export function copyFor(card: GlassCard): LensCopy | null {
     case 'Support':
       // The scene cross-fades its two captions on the timeline; this is the line it settles on.
       return copy(LENS.SUPPORT_LINE, null, null, false, LENS.SUPPORT_UNDERLINE);
+    case 'Fingers':
+      // Figma 5.1: the scene fades this in once the bracelet has gone.
+      return copy(LENS.FINGERS_LINE, null, null, false, LENS.FINGERS_UNDERLINE);
     case 'Sense':
       return card.sense === 'SCENT'
         ? copy('Notice Its Scent.', null, null, false, 'Scent')
@@ -131,11 +135,13 @@ export function copyFor(card: GlassCard): LensCopy | null {
         card.meta ?? null,
       );
     case 'Gaze':
-      return copy(card.instruction, null, card.meta ?? null, card.target !== 'GONE');
+      // Figma 9.1: one line for the whole route; the light shows the way, the voice names it.
+      return copy('Slowly Look Around.', null, null, false, 'Look Around');
     case 'Intro':
       return copy(LENS.INTRO_TITLE, card.merging ? null : LENS.INTRO_PINCH, null, false);
     case 'SoundRings':
-      return copy(card.title ?? LENS.LISTEN_TITLE, card.prompt, card.meta ?? 'Reconnect');
+      // Figma 8.1: the ear in its dotted circle; one line.
+      return copy('Notice Sound Around You.', null, null, false, 'Sound');
     case 'Swatch':
       return copy(card.label, null, card.sub);
     case 'Fireflies':

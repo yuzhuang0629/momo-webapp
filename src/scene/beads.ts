@@ -20,20 +20,25 @@ const front = (x: number, y: number, z: number): Spot =>
 const back = (x: number, y: number, z: number, d: number, fillA: number, rimA: number): Spot =>
   ({x, y, z, d, gx: 0.3956, gy: 0.3545, gr: 0.7157, p0: 0, inner: grey(255, fillA), outer: grey(255, fillA), rim: grey(255, rimA), hi: 0});
 
-/** The spots in the order a downward turn moves the beads (Figma frame px). */
+/**
+ * The spots in the order a downward turn moves the beads (Figma frame px). z = Figma's layer order
+ * (the team's 5.0 HTML: 10 on top); spots below BEAD_Z_HAND sit behind the 5.x hand.
+ */
 const SPOTS: readonly Spot[] = [
-  {x: 310.5, y: 144.5, z: 0.05, d: 73, gx: 0.3956, gy: 0.3545, gr: 0.7157, p0: 0, inner: grey(75), outer: grey(171), rim: grey(255, 0.7), hi: 0}, // Frame 11: over the top
-  front(260.55, 190.55, 0.7), // Frame 9
-  {x: 238, y: 266, z: 1, d: 84, gx: 0.3525, gy: 0.3156, gr: 0.5667, p0: 0.274, inner: grey(76), outer: grey(255), rim: grey(255), hi: 1}, // Frame 2: under the thumb
-  front(238.55, 344.55, 0.9), // Frame 4
-  front(254.55, 416.55, 0.5), // Frame 8
-  {x: 291.5, y: 452.5, z: 0, d: 73, gx: 0.3956, gy: 0.3545, gr: 0.7157, p0: 0, inner: grey(102), outer: grey(102), rim: grey(163), hi: 0}, // Frame 7: round the bottom
-  back(332.5, 425.5, -0.4, 65, 0.2, 0.5), // Ellipse 2389
-  back(351.5, 372.5, -0.75, 65, 0.1, 0.3), // Ellipse 2390
-  back(367.95, 312.95, -1, 61.9, 0.1, 0.3), // Ellipse 2391
-  back(363.95, 251.95, -0.8, 61.9, 0.1, 0.3), // Ellipse 2392
-  back(352.95, 190.95, -0.45, 61.9, 0.2, 0.5), // Ellipse 2393
+  {x: 310.5, y: 144.5, z: 10, d: 73, gx: 0.3956, gy: 0.3545, gr: 0.7157, p0: 0, inner: grey(75), outer: grey(171), rim: grey(255, 0.7), hi: 0}, // Frame 11: over the top
+  front(260.55, 190.55, 7), // Frame 9
+  {x: 238, y: 266, z: 9, d: 84, gx: 0.3525, gy: 0.3156, gr: 0.5667, p0: 0.274, inner: grey(76), outer: grey(255), rim: grey(255), hi: 1}, // Frame 2: under the thumb
+  front(238.55, 344.55, 8), // Frame 4
+  front(254.55, 416.55, 6), // Frame 8
+  {x: 291.5, y: 452.5, z: 5, d: 73, gx: 0.3956, gy: 0.3545, gr: 0.7157, p0: 0, inner: grey(102), outer: grey(102), rim: grey(163), hi: 0}, // Frame 7: round the bottom
+  back(332.5, 425.5, 3, 65, 0.2, 0.5), // Ellipse 2389
+  back(351.5, 372.5, 2, 65, 0.1, 0.3), // Ellipse 2390
+  back(367.95, 312.95, 1, 61.9, 0.1, 0.3), // Ellipse 2391
+  back(363.95, 251.95, 2, 61.9, 0.1, 0.3), // Ellipse 2392
+  back(352.95, 190.95, 3, 61.9, 0.2, 0.5), // Ellipse 2393
 ];
+/** Beads with z below this sit behind the fingers screen's hand (GS:1935). */
+export const BEAD_Z_HAND = 4.5;
 const N = SPOTS.length;
 
 /**
@@ -45,8 +50,8 @@ export const BEAD_TURN_MS = 300;
 /** Reduce motion: the brief dim that marks a turn (the beads don't move). */
 export const BEAD_PULSE_MS = 400;
 const RIM = 1.621;
-const HI_DX = -0.1637; // Ellipse 2367, as fractions of the bead's diameter
-const HI_DY = -0.2232;
+const HI_DX = -0.1444; // Ellipse 2367 (Frame 2's SVG: centre 29.87, 24.87 of 84), as fractions of the bead's diameter
+const HI_DY = -0.2039;
 const HI_R = 0.0863;
 const HI_GLOW = 6.86; // drop-shadow σ 4.46
 /** Highlight radii are quantised so each glow is baked once (≤ 0.125 px off). */
@@ -173,13 +178,13 @@ function beadCurve(p0: Spot, p1: Spot, p2: Spot, p3: Spot, t: number): void {
   curve.y = lerp(b1y, b2y, w(t1, t2));
 }
 
-/** Blend two premultiplied colours and return a CSS colour (or null when fully transparent). */
-function pmColor(p: readonly number[], q: readonly number[], s: number): string | null {
+/** Blend two premultiplied colours and return a CSS colour at [alpha] (or null when fully transparent). */
+function pmColor(p: readonly number[], q: readonly number[], s: number, alpha: number): string | null {
   const al = lerp(p[3]!, q[3]!, s);
-  if (al <= 0.0001) return null;
+  if (al <= 0.0001 || alpha <= 0) return null;
   const k = 1 / al;
   const c = (i: number) => Math.min(255, Math.round(lerp(p[i]!, q[i]!, s) * k));
-  return `rgba(${c(0)},${c(1)},${c(2)},${al.toFixed(4)})`;
+  return `rgba(${c(0)},${c(1)},${c(2)},${(Math.round(al * alpha * 255) / 255).toFixed(4)})`;
 }
 
 const bx = new Float64Array(N);
@@ -214,8 +219,29 @@ export function drawBeads(ctx: CanvasRenderingContext2D, s: State, a0: number): 
 }
 
 function drawOpaque(ctx: CanvasRenderingContext2D, s: State): void {
-  if (trackSprite) blit(ctx, trackSprite, 1);
-  const pos = beadPos(s);
+  drawBeadTrack(ctx, 1);
+  beadLayout(beadPos(s));
+  drawBeadSet(ctx, 1, -Infinity, Infinity);
+  drawBeadArrow(ctx, 1);
+}
+
+/** The thin track behind the beads (Ellipse 2388) at [a]. */
+export function drawBeadTrack(ctx: CanvasRenderingContext2D, a: number): void {
+  warmBeads();
+  if (trackSprite) blit(ctx, trackSprite, a);
+}
+
+/** The dashed arrow (Arrow 1) at [a]. */
+export function drawBeadArrow(ctx: CanvasRenderingContext2D, a: number): void {
+  warmBeads();
+  if (arrowSprite) blit(ctx, arrowSprite, a);
+}
+
+/**
+ * Lays every bead out at bracelet position [pos] (beadLayout, GS:1376-1388) into the shared
+ * buffers, back to front; drawBeadSet then draws them.
+ */
+export function beadLayout(pos: number): void {
   for (let i = 0; i < N; i++) {
     const u = (((i + pos) % N) + N) % N;
     const k = Math.min(N - 1, Math.floor(u));
@@ -240,20 +266,26 @@ function drawOpaque(ctx: CanvasRenderingContext2D, s: State): void {
     }
     order[j + 1] = v;
   }
+}
+
+/** Draws the laid-out beads with zMin ≤ z < zMax at [a] (drawBeadSet, GS:1390-1396). */
+export function drawBeadSet(ctx: CanvasRenderingContext2D, a: number, zMin: number, zMax: number): void {
+  if (a <= 0.003) return;
   for (let n = 0; n < N; n++) {
     const i = order[n]!;
+    const z = bz[i]!;
+    if (z < zMin || z >= zMax) continue;
     const k = bk[i]!;
-    drawBead(ctx, bx[i]!, by[i]!, SPOTS[k]!, SPOTS[(k + 1) % N]!, smoothstep(bf[i]!));
+    drawBead(ctx, bx[i]!, by[i]!, SPOTS[k]!, SPOTS[(k + 1) % N]!, smoothstep(bf[i]!), a);
   }
-  if (arrowSprite) blit(ctx, arrowSprite, 1);
 }
 
 /** One bead between spots p and q, s of the way: size, radial fill, rim and highlight blended. */
-function drawBead(ctx: CanvasRenderingContext2D, x: number, y: number, p: Spot, q: Spot, s: number): void {
+function drawBead(ctx: CanvasRenderingContext2D, x: number, y: number, p: Spot, q: Spot, s: number, a: number): void {
   const d = lerp(p.d, q.d, s);
   const r = d / 2;
-  const ci = pmColor(p.inner, q.inner, s);
-  const co = pmColor(p.outer, q.outer, s);
+  const ci = pmColor(p.inner, q.inner, s, a);
+  const co = pmColor(p.outer, q.outer, s, a);
   if (ci !== null || co !== null) {
     if (ci === co) ctx.fillStyle = ci!;
     else {
@@ -272,7 +304,7 @@ function drawBead(ctx: CanvasRenderingContext2D, x: number, y: number, p: Spot, 
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
   }
-  const rim = pmColor(p.rim, q.rim, s);
+  const rim = pmColor(p.rim, q.rim, s, a);
   if (rim !== null) {
     ctx.strokeStyle = rim;
     ctx.lineWidth = RIM;
@@ -283,6 +315,6 @@ function drawBead(ctx: CanvasRenderingContext2D, x: number, y: number, p: Spot, 
   const hi = lerp(p.hi, q.hi, s);
   if (hi > 0.003) {
     const hr = Math.round((HI_R * d) / HI_R_STEP) * HI_R_STEP;
-    drawGlowDot(ctx, x + HI_DX * d, y + HI_DY * d, hr, hi, HI_GLOW);
+    drawGlowDot(ctx, x + HI_DX * d, y + HI_DY * d, hr, a * hi, HI_GLOW);
   }
 }

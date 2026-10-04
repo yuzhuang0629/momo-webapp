@@ -49,4 +49,7 @@ export const LOGO_GLOW = 9.2;
 export const LOGO_DOT_GLOW = 9.65;
 export const TEXT_GLOW_6_4 = 4.7;
 export const TEXT_GLOW_9_3 = 7.2;
-export const RING_GLOW = 18.43;
+/** Breathing ring: Figma drop-shadow blur 21.8 (σ 10.9), 3.2 / 3.3. */
+export const RING_GLOW = 18.0;
+/** Drop-shadow blur 17.41 (σ 8.71) of the enlarged frames' dots (sense, listen, expand view). */
+export const DOT_GLOW_17 = 14.21;

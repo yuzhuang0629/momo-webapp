@@ -263,11 +263,8 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
           break;
         case 'FINGERS':
           setStep(6, 'fingers');
-          yield* hold(
-            {kind: 'Text', title: LENS.FINGERS_TITLE, subtitle: LENS.FINGERS_SUB, pose: 'Orb', obj: 'Fingers', over: meta},
-            SCRIPT.FINGERS,
-            t.fingers,
-          );
+          // Figma 5.0 → 5.3 → 5.1: the thumb rubs the bracelet twice, then the caption page.
+          yield* hold({kind: 'Fingers', durationMs: s(t.fingers)}, SCRIPT.FINGERS, t.fingers);
           break;
         case 'FIND_THREE':
           yield* findThree();
