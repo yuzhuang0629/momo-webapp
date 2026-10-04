@@ -17,7 +17,9 @@ export const SCRIPT = {
   FINGERS: 'Feel your fingertips.',
   LOOK_AROUND: 'Take a look around you.',
   FIND_OBJECT: 'Find one object nearby.',
-  NOTICE_OBJECT: 'Notice its color... its shape... and its texture.',
+  NOTICE_OBJECT: 'Notice its color... its shape... and its texture.', // unused since 2026-10-04
+  /** #7 web (2026-10-04): the one object's second page. No recording yet: spoken by speechSynthesis. */
+  FIND_WHITE: 'Find the white item.',
   TOUCH: "Notice what you're touching.",
   TAKE_YOUR_TIME: 'Take your time.',
   LISTEN: 'Now, notice one sound around you.',

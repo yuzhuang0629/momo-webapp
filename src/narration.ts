@@ -6,8 +6,8 @@ import {SCRIPT, type ScriptLine} from './engine/script';
 
 const clip = (name: string): string => `/voice/voice_${name}.mp3`;
 
-/** Exact line text → clip URL (Narration.clips). */
-export const NARRATION: Readonly<Record<ScriptLine, string>> = {
+/** Exact line text → clip URL (Narration.clips). A line without a recording (yet) is spoken by speechSynthesis. */
+export const NARRATION: Readonly<Partial<Record<ScriptLine, string>>> = {
   [SCRIPT.BEGIN]: clip('take_a_moment'),
   [SCRIPT.SIT_DOWN]: clip('sit_down'),
   [SCRIPT.SUPPORT]: clip('feel_the_support'),
@@ -44,7 +44,7 @@ export const FLOW_ORDER: readonly ScriptLine[] = [
   SCRIPT.BREATH_1, SCRIPT.BREATH_2, // #4
   SCRIPT.BEADS, // #5
   SCRIPT.FINGERS, // #6
-  SCRIPT.LOOK_AROUND, SCRIPT.NOTICE_OBJECT, SCRIPT.FIND_OBJECT, // #7 (items 2 and 3 repeat these)
+  SCRIPT.LOOK_AROUND, SCRIPT.FIND_WHITE, // #7 (one object)
   SCRIPT.TOUCH, SCRIPT.TAKE_YOUR_TIME, // #8
   SCRIPT.LISTEN, SCRIPT.JUST_NOTICE, // #9
   SCRIPT.GAZE, // #10

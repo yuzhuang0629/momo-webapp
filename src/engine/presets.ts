@@ -3,7 +3,8 @@
 // picks a built-in at random; the web app always picks by id so a take is repeatable.
 //
 // Ids: '1'…'4' = built-ins P0…P3, 'a' = classic (= P0), 'b' = warm desk (= P2),
-// 'c' = coffee (scent branch, not in the Kotlin code). Default: 'a'.
+// 'c' = coffee (scent branch, not in the Kotlin code), 'd' = the web demo (one white item). Default: 'd'.
+import {SCRIPT} from './script';
 
 /** Port of ai/VisionService.kt VisionResult (without the internal `objects`). */
 export interface FindSet {
@@ -22,6 +23,10 @@ export interface FindSet {
    * Optional; without it a colour feature gets the circle and a shape / material one the cup.
    */
   readonly pages?: readonly [FindPage, FindPage, FindPage];
+  /** How many items to find (default all three). */
+  readonly count?: number;
+  /** The second page's voice line (default "Notice its color... its shape... and its texture."). */
+  readonly noticeLine?: string;
 }
 
 export type FindPage = 'circle' | 'cup';
@@ -66,16 +71,17 @@ const COFFEE: SetData = {
   colors: ['#FFFFFF', '#FFA552', '#FFFFFF'],
 };
 
-// Web demo default (2026-10-04): the team's table has a cup of coffee. Item 3 is that cup, named by its
-// shape only (no object names on the lens): 6.1, then
-// the cup page, then #8 "Notice Its Scent.".
+// Web demo default (2026-10-04): find ONE object, the white item on the team's table: 6.1 "Take a
+// Look Around." ("Take a look around you."), then the cup page "Notice the White Item Nearby."
+// ("Find the white item."), then #8 "Feel Its Temperature." (the #8 recordings are about touch).
 const DESK: SetData = {
-  features: ['Something round', 'Something blue', 'Something cylindrical'],
-  touchTargetHasSmell: true,
-  labels: ['Round Item', 'Blue Item', 'Cylindrical Item'],
-  // The first two match (circles: white, then blue); only the third, the real cup, shows the cup.
-  pages: ['circle', 'circle', 'cup'],
+  features: ['Something white', 'Something blue', 'Something cylindrical'],
+  touchTargetHasSmell: false,
+  labels: ['White Item', 'Blue Item', 'Cylindrical Item'],
+  pages: ['cup', 'circle', 'cup'],
   colors: ['#FFFFFF', '#6FA8FF', '#FFFFFF'],
+  count: 1,
+  noticeLine: SCRIPT.FIND_WHITE,
 };
 
 export const FIND_SETS: Readonly<Record<PresetId, FindSet>> = {
@@ -86,7 +92,7 @@ export const FIND_SETS: Readonly<Record<PresetId, FindSet>> = {
   a: {id: 'a', name: 'classic (preset 0, temperature)', ...P0},
   b: {id: 'b', name: 'warm desk (preset 2, temperature)', ...P2},
   c: {id: 'c', name: 'coffee (scent)', ...COFFEE},
-  d: {id: 'd', name: 'demo desk: round / blue / cylindrical = the coffee (scent)', ...DESK},
+  d: {id: 'd', name: 'demo desk: one white item (temperature)', ...DESK},
 };
 
 export function isPresetId(id: string): id is PresetId {

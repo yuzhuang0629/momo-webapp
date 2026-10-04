@@ -356,15 +356,15 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
   /** #7 Three things by feature: LOOK → NOTICE (tinted circle) → ITEM (cup) per item (SE:306-322). */
   function* findThree(): Co {
     setStep(7, `find three (${findSet.name})`);
-    // Two frames per item (Android 23:19): 6.1 "Take a Look Around." with "Take a look around you.", then
-    // 6.2 (coloured circle) for a colour feature or 6.3 (the dotted cup) for a shape / material one,
-    // with "Notice its color... its shape... and its texture.".
-    // Web pacing (2026-10-04): each page outlasts its recording, and the lens rests empty for a
-    // moment between items so one object doesn't run straight into the next.
-    for (let i = 0; i < findSet.features.length; i++) {
+    // Two frames per item: 6.1 "Take a Look Around." with "Take a look around you.", then 6.2
+    // (coloured circle) or 6.3 (the dotted cup) per the set's pages, with the set's line. The web demo
+    // set finds one object (2026-10-04): the white item, then straight on to #8. Each page outlasts its
+    // recording, and with more items the lens rests empty for a moment between them.
+    const count = findSet.count ?? findSet.features.length;
+    for (let i = 0; i < count; i++) {
       const label = labelAt(findSet, i);
       const colorHex = colorAt(findSet, i);
-      const total = findSet.features.length;
+      const total = count;
       if (i > 0) {
         show({kind: 'Blank'});
         yield* pause(t.findGap);
@@ -373,7 +373,7 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
       say(SCRIPT.LOOK_AROUND);
       yield* pinch(t.findLook, 'pinch → notice');
       show({kind: 'Find', stage: pageAt(findSet, i) === 'circle' ? 'NOTICE' : 'ITEM', label, colorHex, index: i, total});
-      say(SCRIPT.NOTICE_OBJECT); // the lens names the feature ("Notice the White Item Nearby.")
+      say(findSet.noticeLine ?? SCRIPT.NOTICE_OBJECT); // the lens names the feature ("Notice the White Item Nearby.")
       yield* pinch(t.findNotice, 'pinch → next item');
     }
   }
@@ -398,7 +398,8 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
   function* expandView(meta: string): Co {
     setStep(10, 'expand view');
     say(SCRIPT.GAZE);
-    const angleDeg = random() * 360;
+    // Web (2026-10-04): one slow head turn straight left or right, picked by the seeded PRNG.
+    const angleDeg = random() < 0.5 ? 180 : 0;
     log(`light → ${angleDeg.toFixed(1)}°`);
     show({kind: 'Gaze', target: 'AWAY', instruction: '', meta, angleDeg});
     yield* pinch(t.gazeMove + t.gazeHold);
