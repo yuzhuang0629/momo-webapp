@@ -8,6 +8,7 @@ import {TOP_UP_FROM, drawBreathRing, stepBreath, warmBreath} from './breath';
 import {beadPos, drawBeads, prebakeBeads, warmBeads} from './beads';
 import {copyFor} from './copy';
 import {drawFind, warmFind} from './find';
+import {drawEnding, prebakeEnding} from './ending';
 import {drawFingers, prebakeFingers} from './fingers';
 import {GAZE_HOME_X, GAZE_HOME_Y, TRAIL_SAMPLE_MS, drawGaze, gazeAwayPoint, warmGaze} from './gaze';
 import {drawIcons, warmIcons} from './icons';
@@ -29,7 +30,7 @@ class GlassScene implements LensScene {
    * Bakes that need the font or the body PNGs, run one per frame (idle start-screen frames) so
    * no later transition pays for them. Each returns true when done, false to retry next frame.
    */
-  private prebake: Array<() => boolean> = [warmIntro, prebakeCommon, prebakeSupport, prebakeBeads, prebakeFingers, prebakeListen];
+  private prebake: Array<() => boolean> = [warmIntro, prebakeCommon, prebakeSupport, prebakeBeads, prebakeFingers, prebakeListen, prebakeEnding];
 
   constructor() {
     // Bake the text-independent sprites up front so no glow is rasterised mid-animation.
@@ -53,7 +54,7 @@ class GlassScene implements LensScene {
     switch (s.mode) {
       // No tap ripple on the Figma-exact screens (GS:347-354).
       case 'BLANK': case 'OFF': case 'INTRO': case 'SUPPORT': case 'FIND': case 'SENSE': case 'BREATH': case 'BEADS':
-      case 'FINGERS': case 'RINGS': case 'GAZE':
+      case 'FINGERS': case 'RINGS': case 'GAZE': case 'ENDING':
         return;
       case 'SWATCH':
         this.addRipple(300, 350, 0.5);
@@ -86,9 +87,10 @@ class GlassScene implements LensScene {
     if (card.kind !== 'Sense') s.senseOp.to(0);
     if (card.kind !== 'SoundRings') s.listenOp.to(0);
     if (card.kind !== 'Fingers') s.fingersOp.to(0, springSpec(100, 1));
+    if (card.kind !== 'Ending') s.endOp.to(0, springSpec(100, 1));
     // A pinch ripple started on the previous screen must not spill onto a Figma-exact one.
     if (card.kind === 'Intro' || card.kind === 'Support' || card.kind === 'Find' || card.kind === 'Sense' || card.kind === 'Breath' || card.kind === 'BreathStep' || card.kind === 'Beads' ||
-      card.kind === 'Fingers' || card.kind === 'SoundRings' || card.kind === 'Gaze') s.ripples = [];
+      card.kind === 'Fingers' || card.kind === 'SoundRings' || card.kind === 'Gaze' || card.kind === 'Ending') s.ripples = [];
     if (card.kind !== 'Intro') s.introOp.to(0, springSpec(100, 1));
     if (card.kind !== 'BreathStep') s.breath = null;
     let icon: ObjectKind | null = null;
@@ -198,6 +200,17 @@ class GlassScene implements LensScene {
           s.fingersOp.set(0);
         }
         s.fingersOp.to(1, springSpec(25, 1));
+        s.texts.set([]);
+        break;
+      case 'Ending':
+        // Figma Component 10 on orbit.html's timeline (drawEnding); its words are part of it.
+        s.mode = 'ENDING';
+        this.hideObj();
+        if (prev !== 'ENDING') {
+          s.endT0 = s.now;
+          s.endOp.set(0);
+        }
+        s.endOp.to(1, springSpec(25, 1));
         s.texts.set([]);
         break;
       case 'Beads': {
@@ -427,6 +440,7 @@ class GlassScene implements LensScene {
     if (s.senseOp.value > 0.003) drawSense(ctx, s, s.senseOp.value, rm);
     if (s.listenOp.value > 0.003) drawListen(ctx, s, s.listenOp.value, rm);
     if (s.fingersOp.value > 0.003) drawFingers(ctx, s, s.fingersOp.value, rm);
+    if (s.endOp.value > 0.003) drawEnding(ctx, s, s.endOp.value, rm);
     drawIcons(ctx, s, rm);
     if (s.introOp.value > 0.003) drawIntro(ctx, s, s.introOp.value);
     if (s.beadsOp.value > 0.003) drawBeads(ctx, s, s.beadsOp.value);

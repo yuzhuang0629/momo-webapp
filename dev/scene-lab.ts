@@ -60,9 +60,9 @@ function flow(opts: {ripple: boolean; scent: boolean}): Ev[] {
   at(156600, {kind: 'Gaze', target: 'GONE', instruction: '', meta: RC(6)});
   at(170650, {kind: 'Text', title: 'Get comfortable', subtitle: 'Hair, clothes, posture', obj: 'Stem', over: 'Re-enter'});
   if (opts.ripple) ev.push({at: shifted(182650), ripple: true});
-  at(182650, {kind: 'Text', title: "Whenever you're ready", subtitle: 'Take your next step', pose: 'Seed'});
-  at(188650, {kind: 'Off'});
-  at(190450, {kind: 'Blank'});
+  at(182650, {kind: 'Ending', durationMs: 12700}); // #12, Figma Component 10 (12.7 s since 22:02)
+  at(195350, {kind: 'Off'});
+  at(197150, {kind: 'Blank'});
   return ev;
 }
 
@@ -80,14 +80,14 @@ const OFFSETS: Record<string, number> = Object.fromEntries(Object.entries({
   intro: 0, introExit: 10000, support: 13000, breath: 36800, inhale: 39800, exhale: 42800,
   beads: 55800, beadsTurn: 66100, fingers: 78600, find: 90600, find2: 100600, find3: 110600,
   sense: 120600, listen: 130600, gaze: 145600,
-  gazeGone: 156600, comfortable: 170650, end: 182650, off: 188650, blank: 190450, quick: 140600,
+  gazeGone: 156600, comfortable: 170650, end: 182650, off: 195350, blank: 197150, quick: 140600,
 }).map(([k, v]) => [k, shifted(v)]));
 
 const DURATIONS: Record<string, number> = {
   intro: 10000, introExit: 3000, support: 23800, breath: 3000, inhale: 3000, exhale: 5000,
   beads: 22800, beadsTurn: 12500, fingers: 14000, find: 10000, find2: 10000, find3: 10000,
   sense: 10000, listen: 15000, gaze: 11000,
-  gazeGone: 1800, comfortable: 12000, end: 6000, off: 1800, blank: 2000, quick: 6600,
+  gazeGone: 1800, comfortable: 12000, end: 12700, off: 1800, blank: 2000, quick: 6600,
 };
 
 interface LabOpts {
@@ -214,7 +214,7 @@ function perfFlow(o: LabOpts & {soft?: boolean; spikeMs?: number} = {}): {frames
   const r = new Runner(eventsFor('flow', o), !!o.rm);
   const times: number[] = [];
   const spikes: Array<[number, number]> = [];
-  while (r.now < shifted(192000)) {
+  while (r.now < shifted(198700)) {
     const t0 = performance.now();
     r.now += FRAME_MS;
     r.applyDue();

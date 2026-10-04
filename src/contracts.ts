@@ -26,6 +26,8 @@ export interface EngineHost {
   say(text: string): void;
   ripple(): void;
   log(message: string): void;
+  /** The bead "clack" when the bracelet moves one bead (#5; SessionOutput.beadClick). Optional. */
+  click?(): void;
 }
 
 /** Wearer inputs, already mapped from keys: Enter = Select, ArrowLeft/Up = Previous,

@@ -6,7 +6,7 @@ import {ACCENT} from './palette';
 import {TextSystem, type Clock} from './text';
 
 export type Mode =
-  | 'BLANK' | 'TEXT' | 'INTRO' | 'SUPPORT' | 'FIND' | 'SENSE' | 'FINGERS' | 'PHASE' | 'BREATH' | 'SWATCH'
+  | 'BLANK' | 'TEXT' | 'INTRO' | 'SUPPORT' | 'FIND' | 'SENSE' | 'FINGERS' | 'ENDING' | 'PHASE' | 'BREATH' | 'SWATCH'
   | 'RINGS' | 'STEPS' | 'PHRASE' | 'CHOICE' | 'STAR' | 'BEADS' | 'GAZE' | 'OFF';
 
 export interface BreathSt {
@@ -105,6 +105,10 @@ export class State {
   // Rub your fingers (Figma 5.x), its own timeline from fingersT0 (GS:119-120).
   readonly fingersOp = this.sp(0);
   fingersT0 = 0;
+
+  // The end (Figma Component 10), its own timeline from endT0 (GS:123-126).
+  readonly endOp = this.sp(0);
+  endT0 = 0;
 
   readonly stem = this.sp(0, MotionTokens.Stem);
 

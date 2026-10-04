@@ -64,6 +64,12 @@ export type GlassCard =
   | {kind: 'Steps'; nodes: string[]; active: number}
   | {kind: 'Phrase'; cue: string; phrase: string}
   | {kind: 'Choice'; options: string[]; selected: number; dir?: number; confirmed?: boolean}
+  /**
+   * The end (USER_FLOW #12, Figma Component 10 / 10.0结束 orbit.html): a light runs once round a
+   * dotted ring, turning it solid, under "Your Body Is Settled. / Return When You’re Ready." and a
+   * "Pinch to exit" pill; then the whole picture fades. durationMs (already scaled) = the timeline.
+   */
+  | {kind: 'Ending'; durationMs: number}
   /** Contract to a seed and fade out ("lights out"). */
   | {kind: 'Off'}
   | {kind: 'Blank'};

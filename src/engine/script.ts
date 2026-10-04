@@ -63,8 +63,9 @@ export const LENS = {
   COMFORTABLE_SUB: 'Hair, clothes, posture',
   REENTER_META: 'Re-enter',
   // #12 (straight ASCII apostrophe, as in SessionEngine.kt:356)
-  END_TITLE: "Whenever you're ready",
-  END_SUB: 'Take your next step',
+  // #12, Figma Component 10 (LensContent.kt:32-33; curly apostrophe as in Figma)
+  ENDING_LINE: 'Your Body Is Settled.\nReturn When You’re Ready.',
+  EXIT_HINT: 'Pinch to exit',
   // QuickExit
   QUICK_TITLE: "You're ready.",
 } as const;
@@ -144,6 +145,9 @@ export function copyFor(card: GlassCard): LensCopy | null {
       return copy(card.nodes[card.active] ?? null, null, null);
     case 'Phrase':
       return copy(card.phrase, null, card.cue);
+    case 'Ending':
+      // Figma 10.1: the scene draws the words with the orbit (they fade with it).
+      return copy(LENS.ENDING_LINE, null, null, false);
     case 'Choice':
       return copy('Choose one', null, null);
     case 'Off':

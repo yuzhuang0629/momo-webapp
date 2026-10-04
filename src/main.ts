@@ -4,6 +4,7 @@ import {readDirectorOptions} from './engine/director';
 import {createEngine} from './engine/engine';
 import {SCRIPT} from './engine/script';
 import {createScene} from './scene/index';
+import {createSfx} from './sfx';
 import {createVoice} from './voice';
 
 const FRAME_MS = 1000 / 30; // the panel is 30 Hz; never run a 60 fps loop
@@ -16,6 +17,8 @@ if (!ctx) throw new Error('2D canvas unavailable');
 
 const director = readDirectorOptions(location.search);
 const voice = createVoice(director.voice);
+// The bead click (#5) shares the voice switch, as on Android (AudioPlayer.beadClick).
+const sfx = createSfx(director.voice);
 // Text is drawn into the canvas: wait for Elms Sans before creating the scene, so its text
 // sprites bake with the real font on the first frame (no fallback flash, no cold bake later).
 await Promise.all([
@@ -31,6 +34,7 @@ const engine = createEngine(
   {
     show: card => scene.apply(card),
     say: text => voice.say(text),
+    click: () => sfx.click(),
     ripple: () => scene.ripple(),
     log: message => console.info(`[momo] ${message}`),
   },
@@ -53,6 +57,7 @@ function send(input: EngineInput): void {
 let firstPinch = true;
 hit.addEventListener('click', () => {
   voice.unlock(engine.step);
+  sfx.unlock();
   void keepDisplayAwake();
   if (engine.phase === 'SAFE_IDLE') {
     engine.start();

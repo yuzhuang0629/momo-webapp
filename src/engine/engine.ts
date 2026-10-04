@@ -1,5 +1,5 @@
 // The session director for USER_FLOW v2.1. Port of momo-android session/SessionEngine.kt
-// (snapshot 21:06). Every step is timed and also ends early on a pinch; nothing waits for
+// (snapshot 22:02). Every step is timed and also ends early on a pinch; nothing waits for
 // confirmation. QuickExit and Stop cancel the script and run their own short ending.
 //
 // Web differences: no camera/AI (the find-three result is the director's preset, available at
@@ -328,6 +328,7 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
         turned++;
         sinceSwipe = 0;
         show(card(turned, got === 'Previous' ? -1 : 1));
+        host.click?.();
       } else {
         // No swipe (or no Neural Band): after 6 s idle, turn one bead per 2.5 s timeout so the
         // user can just watch and count. Auto turns do not reset the idle counter (SE:270-274).
@@ -335,6 +336,7 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
         if (sinceSwipe >= t.beadIdleBeforeAuto) {
           turned++;
           show(card(turned, 1));
+          host.click?.();
         }
       }
     }
@@ -404,9 +406,10 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
   function* endCompanionship(): Co {
     setPhase('END');
     setStep(12, 'end');
-    show({kind: 'Text', title: LENS.END_TITLE, subtitle: LENS.END_SUB, pose: 'Seed'});
+    // Figma Component 10: the light runs once round the ring, then the picture fades; a pinch exits early (SE:359-369).
+    show({kind: 'Ending', durationMs: s(t.end)});
     say(SCRIPT.END);
-    yield* pause(t.end);
+    yield* pinch(t.end, 'pinch → exit');
     show({kind: 'Off'});
     yield* pause(t.fade);
     safeIdle();

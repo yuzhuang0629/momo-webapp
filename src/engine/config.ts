@@ -1,4 +1,4 @@
-// Session timings and settings. Port of momo-android session/SessionConfig.kt (snapshot 21:06).
+// Session timings and settings. Port of momo-android session/SessionConfig.kt (snapshot 22:02).
 // All durations are design ms at 1×. The web app keeps timeScale = 1: the director's ?speed
 // multiplies dt in main.ts instead, so pictures and timers scale together.
 
@@ -117,7 +117,8 @@ export const DEFAULT_TIMINGS: Timings = {
   gazeHold: 4_000,
   comfortable: 12_000,
   comfortableSecondLine: 5_000,
-  end: 6_000,
+  /** #12 orbit.html: hold .8 + orbit 9 + closed .7 + fade 2.2 s. */
+  end: 12_700,
   quick: 4_800,
   fade: 1_800,
   visionTimeout: 8_000,

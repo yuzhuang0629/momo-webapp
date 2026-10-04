@@ -14,6 +14,9 @@ export const SIT_LINE = 'Slowly Sit Down';
 /** Figma Component 8 sets it on two lines ("\n"), the key word capitalised. */
 export const SUPPORT_LINE = 'Feel the Support\nbeneath you.';
 export const FINGERS_LINE = 'Focus on the feeling of two\nfingers rubbing together.';
+/** #12, Figma Component 10 (LensContent.ENDING_LINE / EXIT_HINT). */
+export const ENDING_LINE = 'Your Body Is Settled.\nReturn When You’re Ready.';
+export const EXIT_HINT = 'Pinch to exit';
 
 function copy(title: string | null, sub: string | null, meta: string | null = null, footer = true, underline: string | null = null): Copy {
   return {title, sub, meta, footer, underline};
@@ -73,6 +76,9 @@ export function copyFor(card: GlassCard): Copy | null {
       return copy(card.nodes[card.active] ?? '', null, null);
     case 'Phrase':
       return copy(card.phrase, null, card.cue);
+    case 'Ending':
+      // Figma 10.1: drawEnding draws the words with the orbit (they fade with it).
+      return copy(ENDING_LINE, null, null, false);
     case 'Choice':
       return copy('Choose one', null, null);
     case 'Off':
