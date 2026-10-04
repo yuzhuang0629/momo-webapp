@@ -344,18 +344,19 @@ export function createEngine(host: EngineHost, opts: DirectorOptions, config: Se
   /** #7 Three things by feature: LOOK → NOTICE (tinted circle) → ITEM (cup) per item (SE:306-322). */
   function* findThree(): Co {
     setStep(7, `find three (${findSet.name})`);
-    say(SCRIPT.LOOK_AROUND);
+    // Per item (Android 21:54): 6.1 "Take a look around you." → 6.2 "Notice its color…" → 6.3 "Find one object nearby."
     for (let i = 0; i < findSet.features.length; i++) {
       const label = labelAt(findSet, i);
       const colorHex = colorAt(findSet, i);
       const total = findSet.features.length;
       show({kind: 'Find', stage: 'LOOK', label, colorHex, index: i, total});
-      if (i > 0) say(SCRIPT.FIND_OBJECT); // the first item follows "Take a look around you."
+      say(SCRIPT.LOOK_AROUND);
       yield* pinch(t.findLook, 'pinch → notice');
       show({kind: 'Find', stage: 'NOTICE', label, colorHex, index: i, total});
       say(SCRIPT.NOTICE_OBJECT); // the lens names the feature ("Notice the White Item Nearby.")
       if (yield* pinch(t.findNotice, 'pinch → next item')) continue;
       show({kind: 'Find', stage: 'ITEM', label, colorHex, index: i, total});
+      say(SCRIPT.FIND_OBJECT);
       yield* pinch(t.findItem, 'pinch → next item');
     }
   }
