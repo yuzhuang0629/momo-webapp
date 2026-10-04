@@ -6,6 +6,7 @@ import {SCRIPT} from './engine/script';
 import {createScene} from './scene/index';
 import {createMusic} from './music';
 import {createSfx} from './sfx';
+import {createSimView} from './sim';
 import {createVoice} from './voice';
 
 const FRAME_MS = 1000 / 30; // the panel is 30 Hz; never run a 60 fps loop
@@ -144,7 +145,22 @@ function frame(now: number): void {
     remaining -= dt;
   }
   scene.draw(ctx!);
+  if (sim) {
+    sim.draw(canvas);
+    // The simulated view replays: 3 s after the session ends, it starts again.
+    simIdleMs = engine.phase === 'SAFE_IDLE' ? simIdleMs + elapsed : 0;
+    if (simIdleMs > SIM_REPLAY_MS) {
+      simIdleMs = 0;
+      engine.start();
+    }
+  }
 }
+
+// ?sim=1: the wearer's view over a photo, for viewers on a phone or desktop (src/sim.ts).
+const SIM_REPLAY_MS = 3000;
+let simIdleMs = 0;
+const sim = director.sim ? createSimView('/sim/workspace.webp') : null;
+if (sim) document.documentElement.classList.add('sim');
 
 function startLoop(): void {
   if (rafId) return;

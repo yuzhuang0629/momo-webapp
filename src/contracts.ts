@@ -68,6 +68,8 @@ export interface DirectorOptions {
   preset: string;
   /** Sense branch after the third item. URL ?sense=scent|temperature */
   sense: 'SCENT' | 'TEMPERATURE' | null;
+  /** Simulated wearer's view for phone/desktop viewers (src/sim.ts); implies autostart and replay. URL ?sim=1 */
+  sim: boolean;
   /** Background music on/off. URL ?music=0 */
   music: boolean;
   /** Voice lines on/off. URL ?voice=0 */

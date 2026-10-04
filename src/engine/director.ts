@@ -23,7 +23,7 @@ function flag(value: string | null, fallback: boolean): boolean {
 
 /**
  * ?speed=0.1…4 (default 1) · ?step=2…12 · ?autostart=1 · ?preset=1|2|3|4|a|b|c|d (default d)
- * · ?sense=scent|temperature (default: the preset's own branch) · ?voice=0 (default on) · ?music=0
+ * · ?sense=scent|temperature (default: the preset's own branch) · ?voice=0 (default on) · ?music=0 · ?sim=1 (simulated wearer's view, plays by itself)
  * · ?seed=<int> (default 1; the gaze route).
  */
 export function readDirectorOptions(search: string): DirectorOptions {
@@ -51,7 +51,8 @@ export function readDirectorOptions(search: string): DirectorOptions {
   return {
     speed,
     step,
-    autostart: flag(q.get('autostart'), false),
+    autostart: flag(q.get('autostart'), false) || flag(q.get('sim'), false),
+    sim: flag(q.get('sim'), false),
     preset,
     sense,
     voice: flag(q.get('voice'), true),

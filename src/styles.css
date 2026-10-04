@@ -79,3 +79,18 @@ html.phone body {
 html.phone #root {
   zoom: var(--fit, 1);
 }
+
+/* Simulated wearer's view (?sim=1, src/sim.ts): the world canvas fills the screen; the real lens
+   canvas keeps drawing underneath but is not shown. */
+.sim-world {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+}
+
+html.sim #root {
+  opacity: 0;
+}
